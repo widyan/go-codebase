@@ -21,7 +21,7 @@ func CreateApi(rds *redis.Client, logger *helper.CustomLogger) *Api {
 }
 
 func (a *Api) VerifikasiToken(ctx context.Context, token string) (codes int, vrf model.VerifikasiToken, err error) {
-	body, err := helper.CallAPI(ctx, a.Logger, os.Getenv("URL_USEETV")+os.Getenv("URL_VERIFIKASI_TOKEN_API_GATEWAY"), "POST", nil, []model.Header{
+	body, err := helper.CallAPI(ctx, a.Logger, os.Getenv("BASE_URL")+os.Getenv("URL_VERIFIKASI_TOKEN_API_GATEWAY"), "POST", nil, []model.Header{
 		{Key: "Authorization", Value: "Bearer " + token},
 	})
 	if err != nil {

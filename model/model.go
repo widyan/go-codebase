@@ -2,6 +2,20 @@ package model
 
 import "codebase/go-codebase/entity"
 
+type Logger struct {
+	Time       string `json:"time"`
+	Method     string `json:"method"`
+	Path       string `json:"path"`
+	StatusCode int    `json:"status_code"`
+	Latency    string `json:"latency"`
+	Body       string `json:"body"`
+	Header     string `json:"header"`
+	Error      string `json:"error"`
+	UserAgent  string `json:"user_agent"`
+	ClientIP   string `json:"client_ip"`
+	Responses  string `json:"responses"`
+}
+
 // Header is
 type Header struct {
 	Key   string `json:"key"`

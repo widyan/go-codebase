@@ -1,6 +1,7 @@
 package config
 
 import (
+	log "codebase/go-codebase/helper/logger"
 	"database/sql"
 	"codebase/go-codebase/helper"
 	"os"
@@ -17,7 +18,9 @@ func Postgresql(logger *helper.CustomLogger) *sql.DB {
 		logger.Panic(err)
 	}
 	if err := sqlDB.Ping(); err != nil {
+		logger.Error(err)
 		logger.Panic(err)
+		log.SendToTelgram("go-codebase", "Error")
 	}
 
 	sqlDB.SetConnMaxLifetime(time.Minute * 3)

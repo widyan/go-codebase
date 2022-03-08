@@ -13,11 +13,12 @@ type Handlers struct {
 	DomainHandler *domain.APIHandler
 }
 
-func CreateRoutes(routesGin *gin.Engine, jwt *auth.JWT, hand *domain.APIHandler) *Handlers {
+func CreateRoutes(routesGin *gin.Engine, jwt *auth.JWT) *Handlers {
 	return &Handlers{
 		RoutesGin:routesGin,
 		jwt:jwt,
-		DomainHandler:hand}
+		DomainHandler:domain.GetHandler(),
+	}
 }
 // Routes is
 func (handlers Handlers) Routes() *gin.Engine {

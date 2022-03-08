@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"codebase/go-codebase/model"
 	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 
@@ -13,6 +14,12 @@ import (
 )
 
 // CallAPI is
+
+var (
+	Buf    bytes.Buffer
+	Logger = log.New(&Buf, "logger: ", log.Lshortfile)
+)
+
 func CallAPI(ctx context.Context, logger *CustomLogger, url, method string, payload interface{}, header []model.Header) (body []byte, err error) {
 	// var res *http.Response
 	body, err = json.Marshal(payload)

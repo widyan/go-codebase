@@ -8,10 +8,12 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/joho/godotenv v1.4.0
+	github.com/olivere/elastic/v7 v7.0.31
 	github.com/sirupsen/logrus v1.8.1
 	go.elastic.co/apm/module/apmgin v1.15.0
 	go.elastic.co/apm/module/apmgoredisv8 v1.15.0
 	go.elastic.co/apm/module/apmhttp v1.15.0
 	go.elastic.co/apm/module/apmlogrus v1.15.0
 	go.elastic.co/apm/module/apmsql v1.15.0
+	gopkg.in/sohlich/elogrus.v7 v7.0.0
 )

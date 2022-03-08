@@ -18,8 +18,20 @@ type APIHandler struct {
 	Res     *helper.Responses
 }
 
-func CreateHandler(Usecase Usecase_Interface, rds *redis.Client, logger *helper.CustomLogger, res *helper.Responses) *APIHandler {
-	return &APIHandler{Usecase, rds, logger, res}
+var usecase Usecase_Interface
+var rdsClient *redis.Client
+var customLogger *helper.CustomLogger
+var responses *helper.Responses
+
+func CreateHandler(Usecase Usecase_Interface, rds *redis.Client, logger *helper.CustomLogger, res *helper.Responses) {
+	usecase = Usecase
+	rdsClient = rds
+	customLogger = logger
+	responses = res
+}
+
+func GetHandler()*APIHandler  {
+	return&APIHandler{usecase, rdsClient, customLogger, responses}
 }
 
 func (a APIHandler) Test(c *gin.Context) {

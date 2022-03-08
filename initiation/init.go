@@ -23,11 +23,11 @@ func Init(routesGin *gin.Engine, logger *helper.CustomLogger) (*gin.Engine, *sql
 	response := helper.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
 
 	//init domain
-	userHandler, userUsecase := domain.Init(db, db, redis, logger)
+	userUsecase := domain.Init(db, db, redis, logger)
 	//init JWT
 	initJwt := auth.InitJwt(logger, redis, userUsecase, response)
 
-	routes := route.CreateRoutes(routesGin, initJwt, userHandler)
+	routes := route.CreateRoutes(routesGin, initJwt)
 
 	return routes.Routes(), db, redis
 }

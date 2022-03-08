@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func Init(dbRead, dbWrite *sql.DB, redis *redis.Client, logger *helper.CustomLogger) (*APIHandler, *Usecase) {
+func Init(dbRead, dbWrite *sql.DB, redis *redis.Client, logger *helper.CustomLogger) *Usecase {
 
 	repo := CreateRepository(dbWrite, dbRead, logger) // Create transaction from db
 	apis := api.CreateApi(redis, logger)
@@ -20,8 +20,8 @@ func Init(dbRead, dbWrite *sql.DB, redis *redis.Client, logger *helper.CustomLog
 
 	response := helper.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
 
-	userHandlers := CreateHandler(userUsecase, redis, logger, response) // Assign function repository for using on handler
+	CreateHandler(userUsecase, redis, logger, response) // Assign function repository for using on handler
 
-	return userHandlers, userUsecase
+	return userUsecase
 }
 
