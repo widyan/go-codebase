@@ -1,31 +1,33 @@
-package api
+package middleware
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"codebase/go-codebase/helper"
-	"codebase/go-codebase/model"
 	"os"
 
+	"codebase/go-codebase/helper"
+	"codebase/go-codebase/model"
+
 	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 )
 
-type Api struct {
+type ApiImpl struct {
 	Rds    *redis.Client
-	Logger *helper.CustomLogger
+	Logger *logrus.Logger
 }
 
-func CreateApi(rds *redis.Client, logger *helper.CustomLogger) *Api {
-	return &Api{rds, logger}
+func CreateApi(rds *redis.Client, logger *logrus.Logger) ApisMiddleware {
+	return &ApiImpl{rds, logger}
 }
 
-func (a *Api) VerifikasiToken(ctx context.Context, token string) (codes int, vrf model.VerifikasiToken, err error) {
-	body, err := helper.CallAPI(ctx, a.Logger, os.Getenv("BASE_URL")+os.Getenv("URL_VERIFIKASI_TOKEN_API_GATEWAY"), "POST", nil, []model.Header{
+func (a *ApiImpl) VerifikasiToken(ctx context.Context, token string) (codes int, vrf EntityVerifikasiToken, err error) {
+	body, err := helper.CallAPI(ctx, a.Logger, os.Getenv("URL_USEETV")+os.Getenv("URL_VERIFIKASI_TOKEN_API_GATEWAY"), "POST", nil, []model.Header{
 		{Key: "Authorization", Value: "Bearer " + token},
 	})
 	if err != nil {
-		a.Logger.Error("(Service) " + err.Error())
+		a.Logger.Error(err.Error())
 		return
 	}
 
@@ -33,7 +35,7 @@ func (a *Api) VerifikasiToken(ctx context.Context, token string) (codes int, vrf
 	var result map[string]interface{}
 	err = json.Unmarshal([]byte(body), &result)
 	if err != nil {
-		a.Logger.Error("(Service) " + err.Error())
+		a.Logger.Error(err.Error())
 		return
 	}
 
@@ -43,14 +45,14 @@ func (a *Api) VerifikasiToken(ctx context.Context, token string) (codes int, vrf
 				codes = int(errorCode)
 			}
 			err = fmt.Errorf(result["message"].(string))
-			a.Logger.Error("(Service) " + err.Error())
+			a.Logger.Error(err.Error())
 			return
 		}
 	}
 
 	err = json.Unmarshal([]byte(body), &vrf)
 	if err != nil {
-		a.Logger.Error("(Service) " + err.Error())
+		a.Logger.Error(err.Error())
 		return
 	}
 

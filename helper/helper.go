@@ -1,6 +1,9 @@
 package helper
 
 import (
+	"codebase/go-codebase/model"
+	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"net/smtp"
@@ -31,12 +34,11 @@ func StringInSlice(a string, list []string) bool {
 	return false
 }
 
-func SendEmailUsingSMTP(logger CustomLogger, from, pass, to, identity, msg, smtpMail, port string) (err error) {
+func SendEmailUsingSMTP(from, pass, to, identity, msg, smtpMail, port string) (err error) {
 	err = smtp.SendMail(smtpMail+":"+port,
 		smtp.PlainAuth(identity, from, pass, smtpMail),
 		from, []string{to}, []byte(msg))
 	if err != nil {
-		logger.Error(err)
 		return
 	}
 	return
@@ -44,12 +46,42 @@ func SendEmailUsingSMTP(logger CustomLogger, from, pass, to, identity, msg, smtp
 
 func ConvertTzToNormal(timestamp string) (date time.Time, err error) {
 	t, err := time.Parse(time.RFC3339, timestamp)
-	loc, err := time.LoadLocation("Local")
 	if err != nil {
 		return
 	}
+	loc, _ := time.LoadLocation("Asia/Jakarta")
 	date = t.In(loc)
 	return
+}
+
+func SetCaptureError(capt model.CaptureError) error {
+	capt.Type = "capture error"
+	byteCapt, _ := json.Marshal(capt)
+	return fmt.Errorf(string(byteCapt))
+}
+
+func UniqueString(intSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range intSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
+func UniqueInt(intSlice []int) []int {
+	keys := make(map[int]bool)
+	list := []int{}
+	for _, entry := range intSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }
 
 // func SendEmailUsingSMTP() (err error) {

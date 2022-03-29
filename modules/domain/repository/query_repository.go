@@ -1,8 +1,8 @@
-package domain
+package repository
 
 import (
-	"codebase/go-codebase/entity"
 	"codebase/go-codebase/helper/null"
+	"codebase/go-codebase/modules/domain/entity"
 	"context"
 	"fmt"
 )
@@ -39,7 +39,7 @@ func (r Repository) GetOneUser(ctx context.Context) (user entity.Users, err erro
 }
 
 func (r Repository) GetAllUsers(ctx context.Context) (users []entity.Users, err error) {
-	query := "select ss.id, ss.fullname, ss.no_hp, ss.is_attend, ss.created_at from users ss"
+	query := "select ss.id, ss.fullname, ss.no_hp, ss.is_attend, ss.created_at from sharing_session.users ss"
 	rows, err := r.DBRead.QueryContext(ctx, query)
 	if err != nil {
 		return

@@ -1,25 +1,27 @@
-package service
+package domain
 
 import (
-	"codebase/go-codebase/auth"
-	"codebase/go-codebase/modules/domain"
-	"github.com/gin-gonic/gin"
+	"codebase/go-codebase/middleware"
+	"codebase/go-codebase/modules/domain/handler"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Handlers struct {
-	RoutesGin *gin.Engine
-	jwt *auth.JWT
-	DomainHandler *domain.APIHandler
+	RoutesGin     *gin.Engine
+	Jwt           middleware.UsecaseMiddleware
+	DomainHandler *handler.APIHandler
 }
 
-func CreateRoutes(routesGin *gin.Engine, jwt *auth.JWT) *Handlers {
+func CreateRoutes(routesGin *gin.Engine, jwt middleware.UsecaseMiddleware) *Handlers {
 	return &Handlers{
-		RoutesGin:routesGin,
-		jwt:jwt,
-		DomainHandler:domain.GetHandler(),
+		RoutesGin:     routesGin,
+		Jwt:           jwt,
+		DomainHandler: handler.GetHandler(),
 	}
 }
+
 // Routes is
 func (handlers Handlers) Routes() *gin.Engine {
 	version := os.Getenv("VERSION_API")
@@ -30,7 +32,7 @@ func (handlers Handlers) Routes() *gin.Engine {
 	// api with verifikasi jwt token
 	jwtAuth.GET("/userall", handlers.DomainHandler.GetAllUsers)
 
-	jwtAuth.Use(handlers.jwt.VerifyAutorizationToken()) // Verify Authorization
+	jwtAuth.Use(handlers.Jwt.VerifyAutorizationToken()) // Verify Authorization
 	{
 		jwtAuth.GET("/test", handlers.DomainHandler.Test)
 		jwtAuth.POST("/user", handlers.DomainHandler.InsertUser)

@@ -12,6 +12,7 @@ const (
 	ErrorKetikaMendapatkanDataUser                        = 4008
 	TokenTidakBolehKosong                                 = 4009
 	IdTidakBoleh0                                         = 4010
+	InvalidToken                                          = 1111
 )
 
 var ErrorCodeText = map[int]string{
@@ -26,4 +27,5 @@ var ErrorCodeText = map[int]string{
 	ErrorKetikaMendapatkanDataUser:                        "Error ketika mendapatkan data user",
 	TokenTidakBolehKosong:                                 "Token tidak boleh kosong",
 	IdTidakBoleh0:                                         "Id tidak boleh 0",
+	InvalidToken:                                          "Invalid Token!",
 }

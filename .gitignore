@@ -2,3 +2,7 @@
 .env
 # directory .idea
 .idea
+
+coverage.out
+
+.scannerwork

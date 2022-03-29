@@ -1,41 +1,48 @@
-package domain
+package handler
 
 import (
-	"codebase/go-codebase/entity"
 	"codebase/go-codebase/helper"
-	"codebase/go-codebase/model"
+	"codebase/go-codebase/middleware"
+	"codebase/go-codebase/modules/domain/entity"
+	"codebase/go-codebase/modules/domain/interfaces"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
+	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 )
 
 type APIHandler struct {
-	Usecase Usecase_Interface
-	Rds     *redis.Client
-	Logger  *helper.CustomLogger
-	Res     *helper.Responses
+	Usecase   interfaces.Usecase_Interface
+	Rds       *redis.Client
+	Logger    *logrus.Logger
+	Res       *helper.Responses
+	Validator *validator.Validate
 }
 
-var usecase Usecase_Interface
+var usecase interfaces.Usecase_Interface
 var rdsClient *redis.Client
-var customLogger *helper.CustomLogger
+var customLogger *logrus.Logger
 var responses *helper.Responses
+var validate *validator.Validate
 
-func CreateHandler(Usecase Usecase_Interface, rds *redis.Client, logger *helper.CustomLogger, res *helper.Responses) {
+func CreateHandler(Usecase interfaces.Usecase_Interface, rds *redis.Client, logger *logrus.Logger, res *helper.Responses, vldtr *validator.Validate) {
 	usecase = Usecase
 	rdsClient = rds
 	customLogger = logger
 	responses = res
+	validate = vldtr
 }
 
-func GetHandler()*APIHandler  {
-	return&APIHandler{usecase, rdsClient, customLogger, responses}
+func GetHandler() *APIHandler {
+	return &APIHandler{usecase, rdsClient, customLogger, responses, validate}
 }
 
 func (a APIHandler) Test(c *gin.Context) {
-	var User model.VerifikasiToken
+	var User middleware.VerifikasiToken
 	bind, ok := c.MustGet("bind").([]byte)
 	if !ok {
 		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, helper.ErrorKetikaMendapatkanDataUser)
@@ -54,21 +61,29 @@ func (a APIHandler) InsertUser(c *gin.Context) {
 		return
 	}
 
-	a.Logger.ErrorWithContext(c, param, "Test out context")
+	// a.Logger.ErrorWithContext(c, param, "Test out context")
 
-	if param.Fullname == "" {
-		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, helper.FullNameTidakBolehKosong)
-		return
+	err := a.Validator.Struct(param)
+	if err != nil {
+		if _, ok := err.(*validator.InvalidValidationError); ok {
+			a.Logger.Error(err.Error())
+			a.Res.Json(c, http.StatusBadRequest, nil, err.Error())
+			return
+		}
+
+		for _, err := range err.(validator.ValidationErrors) {
+			a.Res.Json(c, http.StatusBadRequest, nil, err.Field()+" "+err.Tag())
+			return
+		}
 	}
 
-	err := a.Usecase.InsertUser(c.Request.Context(), param)
+	err = a.Usecase.InsertUser(c.Request.Context(), param)
 	if err != nil {
 		a.Res.Json(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
 
 	a.Res.Json(c, http.StatusCreated, param, "Success")
-	return
 }
 
 func (a APIHandler) GetOneUser(c *gin.Context) {
@@ -87,7 +102,6 @@ func (a APIHandler) GetOneUser(c *gin.Context) {
 	usr.CreatedAt = timestamp.Format("2006-01-02 15:04:05")
 
 	a.Res.Json(c, http.StatusOK, usr, "Success")
-	return
 }
 
 func (a APIHandler) GetAllUsers(c *gin.Context) {
@@ -97,7 +111,6 @@ func (a APIHandler) GetAllUsers(c *gin.Context) {
 	}
 
 	a.Res.Json(c, http.StatusOK, users, "Success")
-	return
 }
 
 func (a APIHandler) UpdateFullnameUserByID(c *gin.Context) {
@@ -126,5 +139,4 @@ func (a APIHandler) UpdateFullnameUserByID(c *gin.Context) {
 	}
 
 	a.Res.Json(c, http.StatusOK, nil, "Success")
-	return
 }

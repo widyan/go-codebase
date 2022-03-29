@@ -2,14 +2,15 @@ package helper
 
 import (
 	"bytes"
+	"codebase/go-codebase/model"
 	"context"
 	"encoding/json"
-	"codebase/go-codebase/model"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
 
+	"github.com/sirupsen/logrus"
 	"go.elastic.co/apm/module/apmhttp"
 )
 
@@ -20,7 +21,7 @@ var (
 	Logger = log.New(&Buf, "logger: ", log.Lshortfile)
 )
 
-func CallAPI(ctx context.Context, logger *CustomLogger, url, method string, payload interface{}, header []model.Header) (body []byte, err error) {
+func CallAPI(ctx context.Context, logger *logrus.Logger, url, method string, payload interface{}, header []model.Header) (body []byte, err error) {
 	// var res *http.Response
 	body, err = json.Marshal(payload)
 	if err != nil {
@@ -58,7 +59,7 @@ func CallAPI(ctx context.Context, logger *CustomLogger, url, method string, payl
 	return
 }
 
-func CallAPIFormData(logger CustomLogger, url, method string, formData []model.FormData, headers []model.Header) (body []byte, err error) {
+func CallAPIFormData(logger *logrus.Logger, url, method string, formData []model.FormData, headers []model.Header) (body []byte, err error) {
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
 	for _, element := range formData {
