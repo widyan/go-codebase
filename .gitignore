@@ -6,3 +6,5 @@
 coverage.out
 
 .scannerwork
+
+modules/domain/main/.env
