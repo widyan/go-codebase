@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"codebase/go-codebase/middleware"
+	"codebase/go-codebase/middleware/interfaces"
 	"codebase/go-codebase/modules/domain/handler"
 	"os"
 
@@ -10,11 +10,11 @@ import (
 
 type Handlers struct {
 	RoutesGin     *gin.Engine
-	Jwt           middleware.UsecaseMiddleware
+	Jwt           interfaces.UsecaseMiddleware
 	DomainHandler *handler.APIHandler
 }
 
-func CreateRoutes(routesGin *gin.Engine, jwt middleware.UsecaseMiddleware) *Handlers {
+func CreateRoutes(routesGin *gin.Engine, jwt interfaces.UsecaseMiddleware) *Handlers {
 	return &Handlers{
 		RoutesGin:     routesGin,
 		Jwt:           jwt,

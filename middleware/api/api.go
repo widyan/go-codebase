@@ -1,4 +1,4 @@
-package middleware
+package api
 
 import (
 	"context"
@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"codebase/go-codebase/helper"
-	"codebase/go-codebase/model"
+	"codebase/go-codebase/middleware/interfaces"
+	"codebase/go-codebase/middleware/model"
+	gmodel "codebase/go-codebase/model"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
@@ -18,12 +20,12 @@ type ApiImpl struct {
 	Logger *logrus.Logger
 }
 
-func CreateApi(rds *redis.Client, logger *logrus.Logger) ApisMiddleware {
+func CreateApi(rds *redis.Client, logger *logrus.Logger) interfaces.ApisMiddleware {
 	return &ApiImpl{rds, logger}
 }
 
-func (a *ApiImpl) VerifikasiToken(ctx context.Context, token string) (codes int, vrf EntityVerifikasiToken, err error) {
-	body, err := helper.CallAPI(ctx, a.Logger, os.Getenv("URL_USEETV")+os.Getenv("URL_VERIFIKASI_TOKEN_API_GATEWAY"), "POST", nil, []model.Header{
+func (a *ApiImpl) VerifikasiToken(ctx context.Context, token string) (codes int, vrf model.VerifikasiToken, err error) {
+	body, err := helper.CallAPI(ctx, a.Logger, os.Getenv("URL_USEETV")+os.Getenv("URL_VERIFIKASI_TOKEN_API_GATEWAY"), "POST", nil, []gmodel.Header{
 		{Key: "Authorization", Value: "Bearer " + token},
 	})
 	if err != nil {

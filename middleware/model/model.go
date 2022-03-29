@@ -1,4 +1,4 @@
-package middleware
+package model
 
 // Header is
 type Header struct {

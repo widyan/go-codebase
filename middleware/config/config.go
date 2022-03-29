@@ -1,4 +1,4 @@
-package middleware
+package config
 
 import (
 	helper "codebase/go-codebase/helper/config"

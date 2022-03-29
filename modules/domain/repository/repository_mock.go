@@ -1,4 +1,4 @@
-package usecase
+package repository
 
 import (
 	"codebase/go-codebase/modules/domain/entity"

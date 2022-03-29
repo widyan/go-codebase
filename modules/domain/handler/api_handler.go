@@ -2,7 +2,7 @@ package handler
 
 import (
 	"codebase/go-codebase/helper"
-	"codebase/go-codebase/middleware"
+	middlemodel "codebase/go-codebase/middleware/model"
 	"codebase/go-codebase/modules/domain/entity"
 	"codebase/go-codebase/modules/domain/interfaces"
 	"encoding/json"
@@ -42,7 +42,7 @@ func GetHandler() *APIHandler {
 }
 
 func (a APIHandler) Test(c *gin.Context) {
-	var User middleware.VerifikasiToken
+	var User middlemodel.VerifikasiToken
 	bind, ok := c.MustGet("bind").([]byte)
 	if !ok {
 		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, helper.ErrorKetikaMendapatkanDataUser)

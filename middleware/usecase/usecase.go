@@ -1,4 +1,4 @@
-package middleware
+package usecase
 
 import (
 	"encoding/json"
@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"codebase/go-codebase/helper"
+	"codebase/go-codebase/middleware/interfaces"
+	"codebase/go-codebase/middleware/model"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -15,11 +17,11 @@ import (
 type UsecaseMiddlewareImpl struct {
 	Logger  *logrus.Logger
 	Rds     *redis.Client
-	Usecase ApisMiddleware
+	Usecase interfaces.ApisMiddleware
 	Res     *helper.Responses
 }
 
-func CreateUsecaseMiddleware(logger *logrus.Logger, rds *redis.Client, usecase ApisMiddleware, res *helper.Responses) UsecaseMiddleware {
+func CreateUsecaseMiddleware(logger *logrus.Logger, rds *redis.Client, usecase interfaces.ApisMiddleware, res *helper.Responses) interfaces.UsecaseMiddleware {
 	return &UsecaseMiddlewareImpl{logger, rds, usecase, res}
 }
 
@@ -42,7 +44,7 @@ func (a *UsecaseMiddlewareImpl) VerifyAutorizationToken() gin.HandlerFunc {
 			return
 		}
 
-		var vrf VerifikasiToken
+		var vrf model.VerifikasiToken
 		tkns, _ := a.Rds.Get(c.Request.Context(), "gw:token:"+tokenString).Result()
 		if tkns == "" {
 			code, vrf, err := a.Usecase.VerifikasiToken(c.Request.Context(), tokenString)
@@ -55,7 +57,7 @@ func (a *UsecaseMiddlewareImpl) VerifyAutorizationToken() gin.HandlerFunc {
 			byt, _ := json.Marshal(vrf)
 			c.Set("bind", byt)
 		} else {
-			var data ResponsesRedisVerfikasiToken
+			var data model.ResponsesRedisVerfikasiToken
 			err := json.Unmarshal([]byte(tkns), &data)
 			if err != nil {
 				a.Logger.Error(err.Error())
