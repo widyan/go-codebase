@@ -30,7 +30,7 @@ func (r *Responses) Json(c *gin.Context, code int, data interface{}, message str
 	})
 }
 
-// Json is
+// Json iss
 func (r *Responses) JsonWithErrorCode(c *gin.Context, code int, errorCode int) {
 	c.JSON(code, model.Responses{
 		Code:      code,
