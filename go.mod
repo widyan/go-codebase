@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/elastic/go-elasticsearch/v7 v7.17.1
 	github.com/garyburd/redigo v1.6.3
+	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-playground/validator/v10 v10.10.1

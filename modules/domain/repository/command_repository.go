@@ -20,7 +20,7 @@ func CreateRepository(dbWrite, dbRead *sql.DB, logger *logrus.Logger) *Repositor
 	return &Repository{dbWrite, dbRead, logger}
 }
 
-func (r Repository) InsertUser(ctx context.Context, user entity.Users) (err error) {
+func (r *Repository) InsertUser(ctx context.Context, user entity.Users) (err error) {
 	query := "INSERT INTO sharing_session.users(id, fullname, no_hp, is_attend) values ($1, $2, $3, $4)"
 
 	_, err = r.DBWrite.ExecContext(ctx, query, user.ID, user.Fullname, user.NoHP, user.IsAttend)
@@ -30,7 +30,7 @@ func (r Repository) InsertUser(ctx context.Context, user entity.Users) (err erro
 	return
 }
 
-func (r Repository) UpdateUserByID(ctx context.Context, id int, fullname string) (err error) {
+func (r *Repository) UpdateUserByID(ctx context.Context, id int, fullname string) (err error) {
 	query := "UPDATE sharing_session.users SET fullname = $1 where id = $2"
 	_, err = r.DBWrite.ExecContext(ctx, query, fullname, id)
 	if err != nil {

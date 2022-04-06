@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -50,7 +51,7 @@ func main() {
 	// var lo logger.Loggers
 	routesGin := gin.New()
 	if os.Getenv("MODE") == "development" {
-		// pprof.Register(routesGin)
+		pprof.Register(routesGin)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
