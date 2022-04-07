@@ -31,6 +31,7 @@ func (handlers Handlers) Routes() *gin.Engine {
 
 	// api with verifikasi jwt token
 	jwtAuth.GET("/userall", handlers.DomainHandler.GetAllUsers)
+	jwtAuth.GET("/user/:id", handlers.DomainHandler.GetOneUserByID)
 
 	jwtAuth.Use(handlers.Jwt.VerifyAutorizationToken()) // Verify Authorization
 	{

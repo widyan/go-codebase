@@ -41,7 +41,7 @@ func GetHandler() *APIHandler {
 	return &APIHandler{usecase, rdsClient, customLogger, responses, validate}
 }
 
-func (a APIHandler) Test(c *gin.Context) {
+func (a *APIHandler) Test(c *gin.Context) {
 	var User middlemodel.VerifikasiToken
 	bind, ok := c.MustGet("bind").([]byte)
 	if !ok {
@@ -53,7 +53,7 @@ func (a APIHandler) Test(c *gin.Context) {
 	a.Res.Json(c, http.StatusOK, User.Data, "testing")
 }
 
-func (a APIHandler) InsertUser(c *gin.Context) {
+func (a *APIHandler) InsertUser(c *gin.Context) {
 	var param entity.Users
 	if err := c.ShouldBindJSON(&param); err != nil {
 		a.Logger.Error(err.Error())
@@ -86,7 +86,7 @@ func (a APIHandler) InsertUser(c *gin.Context) {
 	a.Res.Json(c, http.StatusCreated, param, "Success")
 }
 
-func (a APIHandler) GetOneUser(c *gin.Context) {
+func (a *APIHandler) GetOneUser(c *gin.Context) {
 	usr, err := a.Usecase.GetOneUser(c.Request.Context())
 	if err != nil {
 		a.Res.Json(c, http.StatusInternalServerError, nil, err.Error())
@@ -104,16 +104,17 @@ func (a APIHandler) GetOneUser(c *gin.Context) {
 	a.Res.Json(c, http.StatusOK, usr, "Success")
 }
 
-func (a APIHandler) GetAllUsers(c *gin.Context) {
+func (a *APIHandler) GetAllUsers(c *gin.Context) {
 	users, err := a.Usecase.GetAllUsers(c.Request.Context())
 	if err != nil {
 		a.Res.Json(c, http.StatusInternalServerError, nil, err.Error())
+		return
 	}
 
 	a.Res.Json(c, http.StatusOK, users, "Success")
 }
 
-func (a APIHandler) UpdateFullnameUserByID(c *gin.Context) {
+func (a *APIHandler) UpdateFullnameUserByID(c *gin.Context) {
 	var param entity.Users
 	if err := c.ShouldBindJSON(&param); err != nil {
 		a.Logger.Error(err.Error())
@@ -136,7 +137,32 @@ func (a APIHandler) UpdateFullnameUserByID(c *gin.Context) {
 	err = a.Usecase.UpdateUserByID(c.Request.Context(), id, param.Fullname)
 	if err != nil {
 		a.Res.Json(c, http.StatusBadGateway, nil, err.Error())
+		return
 	}
 
 	a.Res.Json(c, http.StatusOK, nil, "Success")
+}
+
+func (a *APIHandler) GetOneUserByID(c *gin.Context) {
+	// var User middlemodel.VerifikasiToken
+	// bind, ok := c.MustGet("bind").([]byte)
+	// if !ok {
+	// 	a.Res.JsonWithErrorCode(c, http.StatusBadRequest, helper.ErrorKetikaMendapatkanDataUser)
+	// 	return
+	// }
+
+	// json.Unmarshal(bind, &User)
+	// a.Logger.Println(User)
+
+	id := c.Param("id")
+	ids, _ := strconv.Atoi(id)
+	users, err := a.Usecase.GetOneUserByID(c.Request.Context(), ids)
+	if err != nil {
+		a.Res.Json(c, http.StatusInternalServerError, nil, err.Error())
+		return
+	}
+
+	// users.Fullname = User.Data.Fullname
+
+	a.Res.Json(c, http.StatusOK, users, "Success")
 }
