@@ -1,4 +1,4 @@
-package helper
+package responses
 
 const (
 	FullNameTidakBolehKosong                              = 4000

@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"codebase/go-codebase/helper"
+	"codebase/go-codebase/responses"
 	"database/sql"
 	"os"
 
@@ -27,7 +27,7 @@ func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *
 	//dbWrite := config.Postgresql(logger) // settingan dbWrite postgresql
 
 	// redis := rds.Redis(logger)
-	response := helper.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
+	response := responses.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
 
 	repo := repository.CreateRepository(db, db, logger) // Create transaction from db
 	userUsecase := usecase.CreateUsecase(repo, logger)
@@ -38,7 +38,7 @@ func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *
 
 	validator := validator.New()
 
-	response = helper.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
+	response = responses.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
 
 	handler.CreateHandler(userUsecase, redis, logger, response, validator) // Assign function repository for using on handler
 

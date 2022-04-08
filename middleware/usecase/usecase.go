@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"codebase/go-codebase/helper"
 	"codebase/go-codebase/middleware/interfaces"
 	"codebase/go-codebase/middleware/model"
+	"codebase/go-codebase/responses"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -18,10 +18,10 @@ type UsecaseMiddlewareImpl struct {
 	Logger  *logrus.Logger
 	Rds     *redis.Client
 	Usecase interfaces.ApisMiddleware
-	Res     *helper.Responses
+	Res     responses.GinResponses
 }
 
-func CreateUsecaseMiddleware(logger *logrus.Logger, rds *redis.Client, usecase interfaces.ApisMiddleware, res *helper.Responses) interfaces.UsecaseMiddleware {
+func CreateUsecaseMiddleware(logger *logrus.Logger, rds *redis.Client, usecase interfaces.ApisMiddleware, res responses.GinResponses) interfaces.UsecaseMiddleware {
 	return &UsecaseMiddlewareImpl{logger, rds, usecase, res}
 }
 
@@ -30,7 +30,7 @@ func (a *UsecaseMiddlewareImpl) VerifyAutorizationToken() gin.HandlerFunc {
 
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			a.Res.AbortWithStatusJSONAndErrorCode(c, 400, helper.TokenTidakBolehKosong)
+			a.Res.AbortWithStatusJSONAndErrorCode(c, 400, responses.TokenTidakBolehKosong)
 			return
 		}
 
@@ -40,7 +40,7 @@ func (a *UsecaseMiddlewareImpl) VerifyAutorizationToken() gin.HandlerFunc {
 		if len(strArr) == 2 {
 			tokenString = strArr[1]
 		} else {
-			a.Res.AbortWithStatusJSONAndErrorCode(c, 403, helper.InvalidToken)
+			a.Res.AbortWithStatusJSONAndErrorCode(c, 403, responses.InvalidToken)
 			return
 		}
 
