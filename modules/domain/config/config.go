@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/go-redis/redis/v8"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,4 +25,8 @@ func (c *Config) Postgresql(dsn, namedb string, SetMaxIdleConns, SetMaxOpenConns
 
 func (c *Config) Redis(address, password string) *redis.Client {
 	return c.Cfg.Redis(address, password)
+}
+
+func (c *Config) RabbitMQ(address string) *amqp.Connection {
+	return c.Cfg.RabbitMQ(address)
 }

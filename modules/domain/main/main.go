@@ -42,11 +42,12 @@ func main() {
 		},
 	})
 	logger.SetReportCaller(true)
+	// logger.Hooks.Add(&apmlogrus.Hook{
+	// 	LogLevels: logrus.AllLevels,
+	// })
 	logger.AddHook(&apmlogrus.Hook{
 		LogLevels: logrus.AllLevels,
 	})
-
-	// logs := helper.CreateLogger(logger)
 
 	// var lo logger.Loggers
 	routesGin := gin.New()
@@ -57,7 +58,7 @@ func main() {
 	}
 	routesGin.Use(apmgin.Middleware(routesGin))
 
-	routesGin, pq, redis := domain.Init(routesGin, logger)
+	routesGin, pq, redis, amqp := domain.Init(routesGin, logger)
 	s := &http.Server{
 		Addr:         os.Getenv("PORT"),
 		Handler:      apmhttp.Wrap(routesGin),
@@ -95,5 +96,6 @@ func main() {
 	logger.Println("Close clonnection postgresql")
 	logger.Println("Close clonnection redis")
 	pq.Close()
+	amqp.Close()
 	redis.Close()
 }
