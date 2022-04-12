@@ -1,32 +1,27 @@
 package config
 
 import (
-	"codebase/go-codebase/cronjobs/libs"
-	"context"
-	"log"
-	"os"
+	"codebase/go-codebase/config"
 
 	"github.com/go-redis/redis/v8"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
 )
 
-func RabbitMQ() *amqp.Connection {
-	conn, err := amqp.Dial(os.Getenv("RABBITMQ"))
-	libs.FailOnError(err, "Failed to connect to RabbitMQ")
-	return conn
+type Config struct {
+	Cfg config.Config
 }
 
-// Redis is
-func Redis() *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS"),
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	if _, err := client.Ping(context.Background()).Result(); err != nil {
-		log.Panic(err)
+func CreateConfig(logger *logrus.Logger) *Config {
+	return &Config{
+		Cfg: config.CreateGlobalConfig(logger),
 	}
+}
 
-	return client
+func (c *Config) Redis(address, password string) *redis.Client {
+	return c.Cfg.Redis(address, password)
+}
+
+func (c *Config) RabbitMQ(address string) *amqp.Connection {
+	return c.Cfg.RabbitMQ(address)
 }

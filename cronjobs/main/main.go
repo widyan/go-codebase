@@ -9,10 +9,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
+	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -23,7 +27,19 @@ func main() {
 		panic(fmt.Sprintf("%s: %s", "Failed to load env", err))
 	}
 
-	rabbitmq, redis, crn := cronjobs.Init()
+	var logger = logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: "2006-01-02 15:04:05.999",
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			s := strings.Split(f.Function, ".")
+			funcname := s[len(s)-1]
+			_, filename := path.Split(f.File)
+			return funcname, filename
+		},
+	})
+	logger.SetReportCaller(true)
+
+	rabbitmq, redis, crn := cronjobs.Init(logger)
 	s := &http.Server{
 		Addr: "2024",
 	}
@@ -57,8 +73,8 @@ func main() {
 	log.Println("Server exiting")
 	redis.Close()
 	log.Println("Close connection redis")
-	rabbitmq.Close()
 	log.Println("Close connection rabbitmq")
-	crn.Stop()
+	rabbitmq.Close()
 	log.Println("Close connection Crons")
+	crn.Stop()
 }

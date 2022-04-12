@@ -58,16 +58,13 @@ func (r *RabbitMQImpl) Worker(task string, job func()) {
 	go func() {
 		for d := range msgs {
 			log.Printf("Received a order: %s", d.Body)
-			// dotCount := bytes.Count(d.Body, []byte("."))
-			// t := time.Duration(dotCount)
-			// time.Sleep(t * time.Second)
 			job()
 			log.Printf("Run worker %s success", task)
 			d.Ack(false)
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	// log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 	<-forever
 }
 

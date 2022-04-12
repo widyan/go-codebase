@@ -9,7 +9,6 @@ import (
 	"codebase/go-codebase/modules/domain/config"
 	"codebase/go-codebase/modules/domain/handler"
 	"codebase/go-codebase/modules/domain/repository"
-	"codebase/go-codebase/modules/domain/scheduller"
 	"codebase/go-codebase/modules/domain/usecase"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +44,7 @@ func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *
 
 	handler.CreateHandler(userUsecase, redis, logger, response, validator) // Assign function repository for using on handler
 
-	scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), redis)
+	// scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), redis)
 
 	hndler := CreateRoutes(routesGin, middle)
 
