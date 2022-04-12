@@ -58,7 +58,7 @@ func main() {
 	}
 	routesGin.Use(apmgin.Middleware(routesGin))
 
-	routesGin, pq, redis, _ := domain.Init(routesGin, logger)
+	routesGin, pq, redis, amqp := domain.Init(routesGin, logger)
 	s := &http.Server{
 		Addr:         os.Getenv("PORT"),
 		Handler:      apmhttp.Wrap(routesGin),
@@ -97,7 +97,7 @@ func main() {
 	pq.Close()
 	logger.Println("Close clonnection redis")
 	redis.Close()
-	// logger.Println("Close clonnection amqp")
-	// amqp.Close()
+	logger.Println("Close clonnection amqp")
+	amqp.Close()
 
 }

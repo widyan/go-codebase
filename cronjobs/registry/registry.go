@@ -69,11 +69,15 @@ func (r *RabbitMQImpl) Worker(task string, job func()) {
 }
 
 func (r *RabbitMQImpl) RunJobs(task string) {
-	log.Println(task)
-
 	ch, err := r.Conn.Channel()
 	libs.FailOnError(err, "Failed to open a channel")
 	defer ch.Close()
+
+	ch.Get(task, true)
+	// msg, ok, err := ch.Get(task, true)
+	// log.Println("Ini Pesan ", msg)
+	// log.Println("Statusnya ", ok)
+	// log.Println("Ini Error ", err)
 
 	q, err := ch.QueueDeclare(
 		task,  // name

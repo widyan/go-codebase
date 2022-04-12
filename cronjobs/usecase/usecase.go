@@ -5,7 +5,6 @@ import (
 	"codebase/go-codebase/cronjobs/registry"
 	"context"
 	"encoding/json"
-	"log"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
@@ -42,7 +41,6 @@ func (u *Usecase) CreateTask() *cron.Cron {
 			name := value.Name
 			cron := "*/1 * * * * *"
 			u.Cron.AddFunc(cron, func() {
-				log.Println("Run task: ", name)
 				go u.Rabbit.RunJobs(name)
 			})
 		}
@@ -57,7 +55,6 @@ func (u *Usecase) CreateTask() *cron.Cron {
 }
 
 func (u *Usecase) CompareJobs() {
-
 	ctx := context.Background()
 	compare, err := u.Redis.Get(ctx, "worker:is_change").Result()
 	if err != nil {
@@ -80,7 +77,6 @@ func (u *Usecase) CompareJobs() {
 				name := value.Name
 				cron := "*/1 * * * * *"
 				crns.AddFunc(cron, func() {
-					log.Println("Run task: ", name)
 					go u.Rabbit.RunJobs(name)
 				})
 			}

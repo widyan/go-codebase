@@ -39,7 +39,7 @@ func CreateWorkerClient(logger *logrus.Logger, redis *redis.Client, project stri
 	}
 }
 
-func (c *CronsWorker) AddJob(ctx context.Context, service, cron string, job func()) {
+func (c *CronsWorker) AddJob(service, cron string, job func()) {
 	c.Mutex.Lock()
 	c.Task = append(c.Task, Task{Name: service, Cron: cron})
 	c.Mutex.Unlock()
