@@ -35,3 +35,15 @@ func (s *SchedullerImpl) TestScheduller() {
 func (s *SchedullerImpl) TestLagiAh() {
 	s.CronWorker.Logger.Info("Test Lagi Ah")
 }
+
+func (s *SchedullerImpl) TestTambahWorker() {
+	s.CronWorker.Logger.Info("Tambah Worker Lagi")
+}
+
+func (s *SchedullerImpl) TestTambahWorkerLagiDuh() {
+	s.CronWorker.Logger.Info("Tambah Worker Lagi Duh")
+}
+
+func (s *SchedullerImpl) TestDasarKampret() {
+	s.CronWorker.Logger.Info("Dasar Kampret")
+}

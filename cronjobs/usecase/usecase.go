@@ -26,9 +26,7 @@ func CreateUsecase(rabbit registry.RabbitMQ, redis *redis.Client, cron *cron.Cro
 }
 
 func (u *Usecase) CreateTask() *cron.Cron {
-	// u.Cron.Stop()
-	c := cron.New(cron.WithParser(cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)))
-
+	u.Cron = cron.New(cron.WithParser(cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)))
 	ctx := context.Background()
 	Result, err := u.Redis.Get(ctx, "worker:lists").Result()
 	if err != nil {
@@ -39,17 +37,64 @@ func (u *Usecase) CreateTask() *cron.Cron {
 
 	tasks := []libs.Tasks{}
 	json.Unmarshal([]byte(Result), &tasks)
-	// log.Println(tasks)
 	for _, task := range tasks {
-		for _, v := range task.Tasks {
-			log.Println("Run task: ", v.Name)
-			c.AddFunc(v.Cron, func() {
-				log.Println("Run task: ", v.Cron)
-				// go u.Rabbit.RunJobs(v.Name)
+		for _, value := range task.Tasks {
+			name := value.Name
+			cron := "*/1 * * * * *"
+			u.Cron.AddFunc(cron, func() {
+				log.Println("Run task: ", name)
+				go u.Rabbit.RunJobs(name)
 			})
 		}
 	}
 
-	c.Start()
+	u.Cron.AddFunc("*/1 * * * * *", func() {
+		u.CompareJobs()
+	})
+
+	u.Cron.Start()
 	return u.Cron
+}
+
+func (u *Usecase) CompareJobs() {
+
+	ctx := context.Background()
+	compare, err := u.Redis.Get(ctx, "worker:is_change").Result()
+	if err != nil {
+		if err.Error() != "redis: nil" {
+			return
+		}
+	}
+	if compare == "1" {
+		log.Println("MANSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+		crns := cron.New(cron.WithParser(cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)))
+		tasks := []libs.Tasks{}
+		lists, err := u.Redis.Get(ctx, "worker:lists").Result()
+		if err != nil {
+			if err.Error() != "redis: nil" {
+				return
+			}
+		}
+		json.Unmarshal([]byte(lists), &tasks)
+		for _, task := range tasks {
+			for _, value := range task.Tasks {
+				name := value.Name
+				cron := "*/1 * * * * *"
+				crns.AddFunc(cron, func() {
+					log.Println("Run task: ", name)
+					go u.Rabbit.RunJobs(name)
+				})
+			}
+		}
+		crns.AddFunc("*/1 * * * * *", func() {
+			u.CompareJobs()
+		})
+		crns.Start()
+		u.Cron.Stop()
+		u.Cron = crns
+
+		if u.Redis.Set(ctx, "worker:is_change", 0, 0).Err() != nil {
+			return
+		}
+	}
 }

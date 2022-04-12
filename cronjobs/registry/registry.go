@@ -79,6 +79,7 @@ func (r *RabbitMQImpl) RunJobs(task string) {
 
 	ch, err := r.Conn.Channel()
 	libs.FailOnError(err, "Failed to open a channel")
+	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
 		task,  // name

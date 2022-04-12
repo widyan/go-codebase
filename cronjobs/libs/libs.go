@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"sync"
 
 	"github.com/go-redis/redis/v8"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -21,6 +22,7 @@ type Tasks struct {
 }
 
 type CronsWorker struct {
+	Mutex   sync.Mutex
 	ConnMQ  *amqp.Connection
 	Logger  *logrus.Logger
 	Redis   *redis.Client
@@ -29,48 +31,14 @@ type CronsWorker struct {
 }
 
 func (c *CronsWorker) AddJob(ctx context.Context, service, cron string, job func()) {
-	var err error
-	task := []Task{}
-	Result, err := c.Redis.Get(ctx, "worker:"+c.Project).Result()
-	if err != nil {
-		if err.Error() != "redis: nil" {
-			c.Logger.Error(err.Error())
-			return
-		}
-	}
-
-	json.Unmarshal([]byte(Result), &task)
-
-	isExsit := false
-	for i, v := range task {
-		if v.Name == service {
-			task[i].Cron = cron
-			isExsit = true
-		}
-	}
-
-	if !isExsit {
-		task = append(task, Task{
-			Name: service,
-			Cron: cron,
-		})
-	}
-
-	data, err := json.Marshal(task)
-	if err != nil {
-		c.Logger.Error(err.Error())
-	}
-
-	if c.Redis.Set(ctx, "worker:"+c.Project, data, 0).Err() != nil {
-		c.Logger.Error(err.Error())
-	}
-
-	c.SetListWorker(ctx, task)
+	c.Mutex.Lock()
+	c.Task = append(c.Task, Task{Name: service, Cron: cron})
+	c.Mutex.Unlock()
 
 	go c.Worker(service, job)
 }
 
-func (c *CronsWorker) SetListWorker(ctx context.Context, task []Task) {
+func (c *CronsWorker) SetListWorker(ctx context.Context) {
 	tasks := []Tasks{}
 
 	Result, err := c.Redis.Get(ctx, "worker:lists").Result()
@@ -81,14 +49,15 @@ func (c *CronsWorker) SetListWorker(ctx context.Context, task []Task) {
 		}
 	}
 
-	json.Unmarshal([]byte(Result), &tasks)
+	rsltByte := []byte(Result)
+	json.Unmarshal(rsltByte, &tasks)
 
 	if len(tasks) == 0 {
-		tasks = append(tasks, Tasks{Project: c.Project, Tasks: task})
+		tasks = append(tasks, Tasks{Project: c.Project, Tasks: c.Task})
 	} else {
-		for _, v := range tasks {
+		for idx, v := range tasks {
 			if v.Project == c.Project {
-				v.Tasks = task
+				tasks[idx].Tasks = c.Task
 			}
 		}
 	}
@@ -100,6 +69,12 @@ func (c *CronsWorker) SetListWorker(ctx context.Context, task []Task) {
 
 	if c.Redis.Set(ctx, "worker:lists", data, 0).Err() != nil {
 		c.Logger.Error(err.Error())
+	}
+
+	if Result != string(data) {
+		if c.Redis.Set(ctx, "worker:is_change", 1, 0).Err() != nil {
+			return
+		}
 	}
 }
 
