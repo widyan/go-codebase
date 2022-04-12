@@ -1,18 +1,14 @@
 package registry
 
 import (
-	"bytes"
 	"codebase/go-codebase/cronjobs/libs"
 	"log"
-	"os"
-	"strings"
-	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type RabbitMQ interface {
-	Worker(task string)
+	Worker(task string, job func())
 	RunJobs(task string)
 }
 
@@ -24,7 +20,7 @@ func NewRegister(conn *amqp.Connection) RabbitMQ {
 	return &RabbitMQImpl{conn}
 }
 
-func (r *RabbitMQImpl) Worker(task string) {
+func (r *RabbitMQImpl) Worker(task string, job func()) {
 	ch, err := r.Conn.Channel()
 	libs.FailOnError(err, "Failed to open a channel")
 
@@ -61,11 +57,12 @@ func (r *RabbitMQImpl) Worker(task string) {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
-			dotCount := bytes.Count(d.Body, []byte("."))
-			t := time.Duration(dotCount)
-			time.Sleep(t * time.Second)
-			log.Printf("Done")
+			log.Printf("Received a order: %s", d.Body)
+			// dotCount := bytes.Count(d.Body, []byte("."))
+			// t := time.Duration(dotCount)
+			// time.Sleep(t * time.Second)
+			job()
+			log.Printf("Run worker %s success", task)
 			d.Ack(false)
 		}
 	}()
@@ -91,7 +88,7 @@ func (r *RabbitMQImpl) RunJobs(task string) {
 	)
 	libs.FailOnError(err, "Failed to open a channel")
 
-	body := bodyFrom(os.Args)
+	// body := bodyFrom(os.Args)
 	err = ch.Publish(
 		"",     // exchange
 		q.Name, // routing key
@@ -100,18 +97,8 @@ func (r *RabbitMQImpl) RunJobs(task string) {
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
-			Body:         []byte(body),
+			Body:         []byte(task),
 		})
 	libs.FailOnError(err, "Failed to publish a message")
-	log.Printf(" [x] Sent %s", body)
-}
-
-func bodyFrom(args []string) string {
-	var s string
-	if (len(args) < 2) || os.Args[1] == "" {
-		s = "hello"
-	} else {
-		s = strings.Join(args[1:], " ")
-	}
-	return s
+	log.Printf(" [x] Run Worker %s", task)
 }

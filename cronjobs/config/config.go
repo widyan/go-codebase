@@ -4,13 +4,14 @@ import (
 	"codebase/go-codebase/cronjobs/libs"
 	"context"
 	"log"
+	"os"
 
 	"github.com/go-redis/redis/v8"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func RabbitMQ() *amqp.Connection {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial(os.Getenv("RABBITMQ"))
 	libs.FailOnError(err, "Failed to connect to RabbitMQ")
 	return conn
 }
@@ -18,7 +19,7 @@ func RabbitMQ() *amqp.Connection {
 // Redis is
 func Redis() *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "10.60.160.76:6379",
+		Addr:     os.Getenv("REDIS"),
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})

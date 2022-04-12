@@ -45,7 +45,7 @@ func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *
 
 	handler.CreateHandler(userUsecase, redis, logger, response, validator) // Assign function repository for using on handler
 
-	connMQ = scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), redis)
+	scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), redis)
 
 	hndler := CreateRoutes(routesGin, middle)
 

@@ -4,15 +4,25 @@ import (
 	"codebase/go-codebase/cronjobs"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	// Aktivasi environment
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic(fmt.Sprintf("%s: %s", "Failed to load env", err))
+	}
+
 	rabbitmq, redis, crn := cronjobs.Init()
 	s := &http.Server{
 		Addr: "2024",

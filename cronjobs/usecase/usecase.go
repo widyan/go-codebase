@@ -66,7 +66,6 @@ func (u *Usecase) CompareJobs() {
 		}
 	}
 	if compare == "1" {
-		log.Println("MANSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
 		crns := cron.New(cron.WithParser(cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)))
 		tasks := []libs.Tasks{}
 		lists, err := u.Redis.Get(ctx, "worker:lists").Result()

@@ -1,7 +1,7 @@
 package scheduller
 
 import (
-	"codebase/go-codebase/cronjobs/libs"
+	"codebase/go-codebase/cronjobs/usecase"
 	"context"
 
 	"github.com/go-redis/redis/v8"
@@ -11,21 +11,16 @@ import (
 
 type SchedullerImpl struct {
 	Ctx        context.Context
-	CronWorker *libs.CronsWorker
+	CronWorker *usecase.CronsWorker
 }
 
-func CreateScheduller(connMQ *amqp.Connection, logger *logrus.Logger, project string, redis *redis.Client) *amqp.Connection {
+func CreateScheduller(connMQ *amqp.Connection, logger *logrus.Logger, project string, redis *redis.Client) {
+	uscaseWorker := usecase.CreateWorkerClient(logger, redis, project, connMQ)
 	schdule := SchedullerImpl{
-		CronWorker: &libs.CronsWorker{
-			ConnMQ:  connMQ,
-			Project: project,
-			Redis:   redis,
-			Logger:  logger,
-		},
-		Ctx: context.Background(),
+		CronWorker: uscaseWorker,
+		Ctx:        context.Background(),
 	}
 	schdule.InitJob()
-	return connMQ
 }
 
 func (s *SchedullerImpl) TestScheduller() {
