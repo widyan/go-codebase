@@ -1,19 +1,19 @@
 package config
 
 import (
-	helper "codebase/go-codebase/helper/config"
+	"codebase/go-codebase/config"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
-	Cfg helper.Config
+	Cfg config.Config
 }
 
 func CreateConfig(logger *logrus.Logger) *Config {
 	return &Config{
-		Cfg: helper.CreateGlobalConfig(logger),
+		Cfg: config.CreateGlobalConfig(logger),
 	}
 }
 

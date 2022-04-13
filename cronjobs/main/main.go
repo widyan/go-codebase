@@ -1,10 +1,11 @@
 package main
 
 import (
-	"codebase/go-codebase/modules/domain"
+	"codebase/go-codebase/cronjobs"
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,13 +15,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
-	"go.elastic.co/apm/module/apmgin"
-	"go.elastic.co/apm/module/apmhttp"
-	"go.elastic.co/apm/module/apmlogrus"
 )
 
 func main() {
@@ -42,33 +38,15 @@ func main() {
 		},
 	})
 	logger.SetReportCaller(true)
-	// logger.Hooks.Add(&apmlogrus.Hook{
-	// 	LogLevels: logrus.AllLevels,
-	// })
-	logger.AddHook(&apmlogrus.Hook{
-		LogLevels: logrus.AllLevels,
-	})
 
-	// var lo logger.Loggers
-	routesGin := gin.New()
-	if os.Getenv("MODE") == "development" {
-		pprof.Register(routesGin)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
-	}
-	routesGin.Use(apmgin.Middleware(routesGin))
-
-	routesGin, pq, redis, amqp := domain.Init(routesGin, logger)
+	rabbitmq, redis, crn := cronjobs.Init(logger)
 	s := &http.Server{
-		Addr:         os.Getenv("PORT"),
-		Handler:      apmhttp.Wrap(routesGin),
-		WriteTimeout: time.Second * 60,
-		ReadTimeout:  time.Second * 30,
+		Addr: "2024",
 	}
 
 	go func() {
 		if err := s.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
-			logger.Printf("listen: %s\n", err)
+			log.Printf("listen: %s\n", err)
 		}
 		s.SetKeepAlivesEnabled(false)
 	}()
@@ -81,7 +59,7 @@ func main() {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	logger.Println("Shutting down server...")
+	log.Println("Shutting down server...")
 
 	// The context is used to inform the server it has 5 seconds to finish
 	// the request it is currently handling
@@ -89,15 +67,14 @@ func main() {
 	defer cancel()
 
 	if err := s.Shutdown(ctx); err != nil {
-		logger.Fatal("Server forced to shutdown:", err)
+		log.Fatal("Server forced to shutdown:", err)
 	}
 
-	logger.Println("Server exiting")
-	logger.Println("Close clonnection postgresql")
-	pq.Close()
-	logger.Println("Close clonnection redis")
+	log.Println("Server exiting")
 	redis.Close()
-	logger.Println("Close clonnection amqp")
-	amqp.Close()
-
+	log.Println("Close connection redis")
+	log.Println("Close connection rabbitmq")
+	rabbitmq.Close()
+	log.Println("Close connection Crons")
+	crn.Stop()
 }

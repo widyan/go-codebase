@@ -1,4 +1,4 @@
-package helper
+package responses
 
 import (
 	"codebase/go-codebase/model"
@@ -8,16 +8,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Responses struct {
+type GinResponses interface {
+	Json(c *gin.Context, code int, data interface{}, message string)
+	JsonWithErrorCode(c *gin.Context, code int, errorCode int)
+	AbortWithStatusJSONAndInherited(c *gin.Context, code int, errorCode int, data interface{}, message string)
+	AbortWithStatusJSONAndErrorCode(c *gin.Context, code int, errorCode int)
+	JsonWithCaptureError(c *gin.Context, err error)
+}
+
+type GinResponsesImpl struct {
 	ProjectName string `json:"project_name"`
 }
 
-func CreateCustomResponses(projectName string) *Responses {
-	return &Responses{ProjectName: projectName}
+func CreateCustomResponses(projectName string) GinResponses {
+	return &GinResponsesImpl{ProjectName: projectName}
 }
 
 // Json is
-func (r *Responses) Json(c *gin.Context, code int, data interface{}, message string) {
+func (r *GinResponsesImpl) Json(c *gin.Context, code int, data interface{}, message string) {
 	if code > 399 {
 		data = nil
 	}
@@ -31,7 +39,7 @@ func (r *Responses) Json(c *gin.Context, code int, data interface{}, message str
 }
 
 // Json iss
-func (r *Responses) JsonWithErrorCode(c *gin.Context, code int, errorCode int) {
+func (r *GinResponsesImpl) JsonWithErrorCode(c *gin.Context, code int, errorCode int) {
 	c.JSON(code, model.Responses{
 		Code:      code,
 		Status:    StatusText(code),
@@ -42,7 +50,7 @@ func (r *Responses) JsonWithErrorCode(c *gin.Context, code int, errorCode int) {
 }
 
 // AbortWithStatusJSON is
-func (r *Responses) AbortWithStatusJSONAndInherited(c *gin.Context, code int, errorCode int, data interface{}, message string) {
+func (r *GinResponsesImpl) AbortWithStatusJSONAndInherited(c *gin.Context, code int, errorCode int, data interface{}, message string) {
 	c.AbortWithStatusJSON(code, model.Responses{
 		Code:      code,
 		Status:    StatusText(code),
@@ -53,7 +61,7 @@ func (r *Responses) AbortWithStatusJSONAndInherited(c *gin.Context, code int, er
 }
 
 // AbortWithStatusJSON is
-func (r *Responses) AbortWithStatusJSONAndErrorCode(c *gin.Context, code int, errorCode int) {
+func (r *GinResponsesImpl) AbortWithStatusJSONAndErrorCode(c *gin.Context, code int, errorCode int) {
 	c.AbortWithStatusJSON(code, model.Responses{
 		Code:      code,
 		Status:    StatusText(code),
@@ -64,7 +72,7 @@ func (r *Responses) AbortWithStatusJSONAndErrorCode(c *gin.Context, code int, er
 }
 
 // Json is
-func (r *Responses) JsonWithCaptureError(c *gin.Context, err error) {
+func (r *GinResponsesImpl) JsonWithCaptureError(c *gin.Context, err error) {
 	var pureError error = err
 	var capt model.CaptureError
 	err = json.Unmarshal([]byte(err.Error()), &capt)

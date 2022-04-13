@@ -20,3 +20,7 @@ type Repository_Interface interface {
 	UpdateUserByID(ctx context.Context, id int, fullname string) (err error)
 	GetOneUserByID(ctx context.Context, id int) (user entity.Users, err error)
 }
+
+type Scheduller interface {
+	TestScheduller()
+}

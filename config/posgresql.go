@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"go.elastic.co/apm/module/apmsql"
 	_ "go.elastic.co/apm/module/apmsql/pq"
@@ -17,6 +18,7 @@ type ConfigImpl struct {
 type Config interface {
 	Postgresql(dsn, namedb string, SetMaxIdleConns, SetMaxOpenConns int) *sql.DB
 	Redis(address, password string) *redis.Client
+	RabbitMQ(addrs string) *amqp.Connection
 }
 
 func CreateGlobalConfig(logger *logrus.Logger) *ConfigImpl {

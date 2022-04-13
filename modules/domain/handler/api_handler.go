@@ -5,6 +5,7 @@ import (
 	middlemodel "codebase/go-codebase/middleware/model"
 	"codebase/go-codebase/modules/domain/entity"
 	"codebase/go-codebase/modules/domain/interfaces"
+	"codebase/go-codebase/responses"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -19,45 +20,46 @@ type APIHandler struct {
 	Usecase   interfaces.Usecase_Interface
 	Rds       *redis.Client
 	Logger    *logrus.Logger
-	Res       *helper.Responses
+	Res       responses.GinResponses
 	Validator *validator.Validate
 }
 
 var usecase interfaces.Usecase_Interface
 var rdsClient *redis.Client
 var customLogger *logrus.Logger
-var responses *helper.Responses
+var response responses.GinResponses
 var validate *validator.Validate
 
-func CreateHandler(Usecase interfaces.Usecase_Interface, rds *redis.Client, logger *logrus.Logger, res *helper.Responses, vldtr *validator.Validate) {
+func CreateHandler(Usecase interfaces.Usecase_Interface, rds *redis.Client, logger *logrus.Logger, res responses.GinResponses, vldtr *validator.Validate) {
 	usecase = Usecase
 	rdsClient = rds
 	customLogger = logger
-	responses = res
+	response = res
 	validate = vldtr
 }
 
 func GetHandler() *APIHandler {
-	return &APIHandler{usecase, rdsClient, customLogger, responses, validate}
+	return &APIHandler{usecase, rdsClient, customLogger, response, validate}
 }
 
 func (a *APIHandler) Test(c *gin.Context) {
 	var User middlemodel.VerifikasiToken
 	bind, ok := c.MustGet("bind").([]byte)
 	if !ok {
-		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, helper.ErrorKetikaMendapatkanDataUser)
+		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, responses.ErrorKetikaMendapatkanDataUser)
 		return
 	}
 
 	json.Unmarshal(bind, &User)
-	a.Res.Json(c, http.StatusOK, User.Data, "testing")
+	json.NewEncoder(c.Writer).Encode(User.Data)
+	// a.Res.Json(c, http.StatusOK, User.Data, "testing")
 }
 
 func (a *APIHandler) InsertUser(c *gin.Context) {
 	var param entity.Users
 	if err := c.ShouldBindJSON(&param); err != nil {
 		a.Logger.Error(err.Error())
-		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, helper.ParameterBodyTidakSesuai)
+		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, responses.ParameterBodyTidakSesuai)
 		return
 	}
 
@@ -118,7 +120,7 @@ func (a *APIHandler) UpdateFullnameUserByID(c *gin.Context) {
 	var param entity.Users
 	if err := c.ShouldBindJSON(&param); err != nil {
 		a.Logger.Error(err.Error())
-		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, helper.ParameterBodyTidakSesuai)
+		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, responses.ParameterBodyTidakSesuai)
 		return
 	}
 
@@ -130,7 +132,7 @@ func (a *APIHandler) UpdateFullnameUserByID(c *gin.Context) {
 	}
 
 	if id == 0 {
-		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, helper.IdTidakBoleh0)
+		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, responses.IdTidakBoleh0)
 		return
 	}
 

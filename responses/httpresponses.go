@@ -1,4 +1,4 @@
-package helper
+package responses
 
 const (
 	StatusContinue           = 100 // RFC 7231, 6.2.1

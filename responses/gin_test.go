@@ -1,6 +1,7 @@
-package helper
+package responses
 
 import (
+	"codebase/go-codebase/helper"
 	"codebase/go-codebase/model"
 	"encoding/json"
 	"fmt"
@@ -61,7 +62,7 @@ func TestJsonWithCaptureError1(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
-	cptrError := SetCaptureError(model.CaptureError{
+	cptrError := helper.SetCaptureError(model.CaptureError{
 		Type:      "capture error",
 		HttpCode:  http.StatusBadRequest,
 		ErrorCode: InvalidToken,
