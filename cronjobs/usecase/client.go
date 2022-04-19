@@ -61,6 +61,9 @@ func (c *CronsWorker) SetListWorker(ctx context.Context) {
 	rsltByte := []byte(Result)
 	json.Unmarshal(rsltByte, &tasks)
 
+	if c.Task == nil {
+		c.Task = []Task{}
+	}
 	if len(tasks) == 0 {
 		tasks = append(tasks, Tasks{Project: c.Project, Tasks: c.Task})
 	} else {

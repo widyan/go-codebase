@@ -18,7 +18,7 @@ func Init(logger *logrus.Logger) (rabbitmq *amqp.Connection, redis *redis.Client
 	redis = cfg.Redis(os.Getenv("REDIS"), "")
 	register := registry.NewRegister(rabbitmq)
 	initcron := cron.New(cron.WithParser(cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)))
-	usecase := usecase.CreateUsecase(register, redis, initcron)
+	usecase := usecase.CreateUsecase(logger, register, redis, initcron)
 	crn = usecase.CreateTask()
 
 	return

@@ -42,3 +42,7 @@ func (s *SchedullerImpl) TestTambahWorkerLagiDuh() {
 func (s *SchedullerImpl) TestDasarKampret() {
 	s.CronWorker.Logger.Info("Dasar Kampret")
 }
+
+func (s *SchedullerImpl) TambahWorkerLagi() {
+	s.CronWorker.Logger.Info("Tambah Worker Lagi")
+}

@@ -6,6 +6,7 @@ func (c *SchedullerImpl) InitJob() {
 	c.CronWorker.AddJob("TestTambahWorker", "*/1 * * * *", c.TestTambahWorker)
 	c.CronWorker.AddJob("TestTambahWorkerLagiDuh", "/5 * * * *", c.TestTambahWorkerLagiDuh)
 	c.CronWorker.AddJob("TestDasarKampret", "*/1 * * * *", c.TestDasarKampret)
+	c.CronWorker.AddJob("TambahWorkerLagi", "*/1 * * * *", c.TestDasarKampret)
 
 	c.CronWorker.SetListWorker(c.Ctx)
 }

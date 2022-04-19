@@ -8,19 +8,22 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
+	"github.com/sirupsen/logrus"
 )
 
 type Usecase struct {
 	Rabbit registry.RabbitMQ
 	Cron   *cron.Cron
 	Redis  *redis.Client
+	Logger *logrus.Logger
 }
 
-func CreateUsecase(rabbit registry.RabbitMQ, redis *redis.Client, cron *cron.Cron) Usecase {
+func CreateUsecase(logger *logrus.Logger, rabbit registry.RabbitMQ, redis *redis.Client, cron *cron.Cron) Usecase {
 	return Usecase{
 		Rabbit: rabbit,
 		Redis:  redis,
 		Cron:   cron,
+		Logger: logger,
 	}
 }
 
@@ -35,7 +38,15 @@ func (u *Usecase) CreateTask() *cron.Cron {
 	}
 
 	tasks := []libs.Tasks{}
+	if Result == "" {
+		Result = `[]`
+	}
+
 	json.Unmarshal([]byte(Result), &tasks)
+	if len(tasks) == 0 {
+		return u.Cron
+	}
+
 	for _, task := range tasks {
 		for _, value := range task.Tasks {
 			name := value.Name
@@ -84,8 +95,8 @@ func (u *Usecase) CompareJobs() {
 		crns.AddFunc("*/1 * * * * *", func() {
 			u.CompareJobs()
 		})
-		crns.Start()
 		u.Cron.Stop()
+		crns.Start()
 		u.Cron = crns
 
 		if u.Redis.Set(ctx, "worker:is_change", 0, 0).Err() != nil {
