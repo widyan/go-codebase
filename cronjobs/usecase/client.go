@@ -53,6 +53,7 @@ func (c *CronsWorker) AddJob(cron string, job func()) {
 
 func (c *CronsWorker) SetListWorker(ctx context.Context) {
 	tasks := []Tasks{}
+	isNewProject := true
 
 	Result, err := c.Redis.Get(ctx, "worker:lists").Result()
 	if err != nil {
@@ -70,12 +71,18 @@ func (c *CronsWorker) SetListWorker(ctx context.Context) {
 	}
 	if len(tasks) == 0 {
 		tasks = append(tasks, Tasks{Project: c.Project, Tasks: c.Task})
-	} else {
-		for idx, v := range tasks {
-			if v.Project == c.Project {
-				tasks[idx].Tasks = c.Task
-			}
+	}
+
+	for idx, v := range tasks {
+		if v.Project == c.Project {
+			isNewProject = false
+			tasks[idx].Tasks = c.Task
+			break
 		}
+	}
+
+	if isNewProject {
+		tasks = append(tasks, Tasks{Project: c.Project, Tasks: c.Task})
 	}
 
 	data, err := json.Marshal(tasks)

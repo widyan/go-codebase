@@ -25,12 +25,12 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 	libs.FailOnError(err, "Failed to open a channel")
 
 	q, err := ch.QueueDeclare(
-		project+task, // name
-		true,         // durable
-		false,        // delete when unused
-		false,        // exclusive
-		false,        // no-wait
-		nil,          // arguments
+		project+":"+task, // name
+		true,             // durable
+		false,            // delete when unused
+		false,            // exclusive
+		false,            // no-wait
+		nil,              // arguments
 	)
 	libs.FailOnError(err, "Failed to declare a queue")
 
@@ -73,19 +73,19 @@ func (r *RabbitMQImpl) RunJobs(project, task string) {
 	libs.FailOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	ch.Get(task, true)
+	ch.Get(project+":"+task, true)
 	// msg, ok, err := ch.Get(task, true)
 	// log.Println("Ini Pesan ", msg)
 	// log.Println("Statusnya ", ok)
 	// log.Println("Ini Error ", err)
 
 	q, err := ch.QueueDeclare(
-		task,  // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
+		project+":"+task, // name
+		true,             // durable
+		false,            // delete when unused
+		false,            // exclusive
+		false,            // no-wait
+		nil,              // arguments
 	)
 	libs.FailOnError(err, "Failed to open a channel")
 

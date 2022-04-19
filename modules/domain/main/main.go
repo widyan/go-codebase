@@ -93,11 +93,11 @@ func main() {
 	}
 
 	logger.Println("Server exiting")
-	logger.Println("Close clonnection postgresql")
+	logger.Println("Close connection postgresql")
 	pq.Close()
-	logger.Println("Close clonnection redis")
+	logger.Println("Close connection redis")
 	redis.Close()
-	logger.Println("Close clonnection amqp")
+	logger.Println("Close connection amqp")
 	amqp.Close()
 
 }
