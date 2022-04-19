@@ -73,11 +73,7 @@ func (r *RabbitMQImpl) RunJobs(project, task string) {
 	libs.FailOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	ch.Get(project+":"+task, true)
-	// msg, ok, err := ch.Get(task, true)
-	// log.Println("Ini Pesan ", msg)
-	// log.Println("Statusnya ", ok)
-	// log.Println("Ini Error ", err)
+	ch.Consume(project+":"+task, "", true, false, false, false, nil)
 
 	q, err := ch.QueueDeclare(
 		project+":"+task, // name
