@@ -49,10 +49,10 @@ func (u *Usecase) CreateTask() *cron.Cron {
 
 	for _, task := range tasks {
 		for _, value := range task.Tasks {
-			name := value.Name
+			name := task.Project + value.Name
 			cron := "*/1 * * * * *"
 			u.Cron.AddFunc(cron, func() {
-				go u.Rabbit.RunJobs(name)
+				go u.Rabbit.RunJobs(task.Project, name)
 			})
 		}
 	}
@@ -85,10 +85,10 @@ func (u *Usecase) CompareJobs() {
 		json.Unmarshal([]byte(lists), &tasks)
 		for _, task := range tasks {
 			for _, value := range task.Tasks {
-				name := value.Name
+				name := task.Project + value.Name
 				cron := "*/1 * * * * *"
 				crns.AddFunc(cron, func() {
-					go u.Rabbit.RunJobs(name)
+					go u.Rabbit.RunJobs(task.Project, name)
 				})
 			}
 		}

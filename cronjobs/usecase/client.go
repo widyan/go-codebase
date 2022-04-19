@@ -4,6 +4,9 @@ import (
 	"codebase/go-codebase/cronjobs/registry"
 	"context"
 	"encoding/json"
+	"reflect"
+	"runtime"
+	"strings"
 	"sync"
 
 	"github.com/go-redis/redis/v8"
@@ -39,12 +42,13 @@ func CreateWorkerClient(logger *logrus.Logger, redis *redis.Client, project stri
 	}
 }
 
-func (c *CronsWorker) AddJob(service, cron string, job func()) {
+func (c *CronsWorker) AddJob(cron string, job func()) {
+	service := strings.ReplaceAll(strings.Split(runtime.FuncForPC(reflect.ValueOf(job).Pointer()).Name(), ".")[2], "-fm", "")
 	c.Mutex.Lock()
 	c.Task = append(c.Task, Task{Name: service, Cron: cron})
 	c.Mutex.Unlock()
 
-	go c.Registry.Worker(service, job)
+	go c.Registry.Worker(c.Project, service, job)
 }
 
 func (c *CronsWorker) SetListWorker(ctx context.Context) {

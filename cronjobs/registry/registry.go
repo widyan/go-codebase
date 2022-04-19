@@ -8,8 +8,8 @@ import (
 )
 
 type RabbitMQ interface {
-	Worker(task string, job func())
-	RunJobs(task string)
+	Worker(project, task string, job func())
+	RunJobs(project, task string)
 }
 
 type RabbitMQImpl struct {
@@ -20,17 +20,17 @@ func NewRegister(conn *amqp.Connection) RabbitMQ {
 	return &RabbitMQImpl{conn}
 }
 
-func (r *RabbitMQImpl) Worker(task string, job func()) {
+func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 	ch, err := r.Conn.Channel()
 	libs.FailOnError(err, "Failed to open a channel")
 
 	q, err := ch.QueueDeclare(
-		task,  // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
+		project+task, // name
+		true,         // durable
+		false,        // delete when unused
+		false,        // exclusive
+		false,        // no-wait
+		nil,          // arguments
 	)
 	libs.FailOnError(err, "Failed to declare a queue")
 
@@ -57,9 +57,9 @@ func (r *RabbitMQImpl) Worker(task string, job func()) {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a order: %s", d.Body)
+			log.Printf("Received a order from %s with task %s", project, task)
 			job()
-			log.Printf("Run worker %s success", task)
+			log.Printf("Run worker %s with task %s success", project, task)
 			d.Ack(false)
 		}
 	}()
@@ -68,7 +68,7 @@ func (r *RabbitMQImpl) Worker(task string, job func()) {
 	<-forever
 }
 
-func (r *RabbitMQImpl) RunJobs(task string) {
+func (r *RabbitMQImpl) RunJobs(project, task string) {
 	ch, err := r.Conn.Channel()
 	libs.FailOnError(err, "Failed to open a channel")
 	defer ch.Close()
@@ -101,5 +101,5 @@ func (r *RabbitMQImpl) RunJobs(task string) {
 			Body:         []byte(task),
 		})
 	libs.FailOnError(err, "Failed to publish a message")
-	log.Printf(" [x] Run Worker %s", task)
+	log.Printf(" [x] Run Worker %s with task %s", project, task)
 }
