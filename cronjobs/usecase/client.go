@@ -96,6 +96,7 @@ func (c *CronsWorker) SetListWorker(ctx context.Context) {
 
 	if Result != string(data) {
 		if c.Redis.Set(ctx, "worker:is_change", 1, 0).Err() != nil {
+			c.Logger.Error(err.Error())
 			return
 		}
 	}
