@@ -27,10 +27,12 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 	q, err := ch.QueueDeclare(
 		project+":"+task, // name
 		true,             // durable
-		false,            // delete when unused
+		true,             // delete when unused
 		false,            // exclusive
 		false,            // no-wait
-		nil,              // arguments
+		amqp.Table{
+			"x-expires": 1000,
+		}, // arguments
 	)
 	libs.FailOnError(err, "Failed to declare a queue")
 
@@ -73,15 +75,15 @@ func (r *RabbitMQImpl) RunJobs(project, task string) {
 	libs.FailOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	ch.Consume(project+":"+task, "", true, false, false, false, nil)
-
 	q, err := ch.QueueDeclare(
 		project+":"+task, // name
 		true,             // durable
-		false,            // delete when unused
+		true,             // delete when unused
 		false,            // exclusive
 		false,            // no-wait
-		nil,              // arguments
+		amqp.Table{
+			"x-expires": 1000,
+		}, // arguments
 	)
 	libs.FailOnError(err, "Failed to open a channel")
 
