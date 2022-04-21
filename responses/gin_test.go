@@ -21,6 +21,14 @@ func TestJson(t *testing.T) {
 	testResp.Json(c, http.StatusOK, "testing", "test")
 }
 
+func TestJson1(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	testResp := CreateCustomResponses("test")
+	testResp.Json(c, http.StatusNotFound, "testing", "test")
+}
+
 func TestJsonWithErrorCode(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
