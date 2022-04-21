@@ -2,6 +2,7 @@ package domain
 
 import (
 	"codebase/go-codebase/responses"
+	"codebase/go-codebase/session"
 	"database/sql"
 	"os"
 
@@ -36,16 +37,17 @@ func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *
 	userUsecase := usecase.CreateUsecase(repo, logger)
 
 	//init JWT
-	// initJwt := auth.InitJwt(logger, redis, userUsecase, response)
 	middle := middleware.Init(logger, response)
 
 	validator := validator.New()
 
 	response = responses.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
 
-	handler.CreateHandler(userUsecase, redis, logger, response, validator) // Assign function repository for using on handler
+	handler.CreateHandler(userUsecase, logger, response, validator) // Assign function repository for using on handler
 
-	scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), redis)
+	sesi := session.NewRedisSessionStoreAdapter(redis, 0)
+	initCron := scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), sesi)
+	initCron.InitJob()
 
 	hndler := CreateRoutes(routesGin, middle)
 

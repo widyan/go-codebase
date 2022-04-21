@@ -3,46 +3,45 @@ package usecase
 import (
 	"codebase/go-codebase/cronjobs/libs"
 	"codebase/go-codebase/cronjobs/registry"
+	"codebase/go-codebase/session"
 	"context"
 	"encoding/json"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 )
 
 type Usecase struct {
-	Rabbit registry.RabbitMQ
-	Cron   *cron.Cron
-	Redis  *redis.Client
-	Logger *logrus.Logger
+	Rabbit  registry.RabbitMQ
+	Cron    *cron.Cron
+	Logger  *logrus.Logger
+	Session session.Session
 }
 
-func CreateUsecase(logger *logrus.Logger, rabbit registry.RabbitMQ, redis *redis.Client, cron *cron.Cron) Usecase {
+func CreateUsecase(logger *logrus.Logger, rabbit registry.RabbitMQ, cron *cron.Cron, session session.Session) Usecase {
 	return Usecase{
-		Rabbit: rabbit,
-		Redis:  redis,
-		Cron:   cron,
-		Logger: logger,
+		Rabbit:  rabbit,
+		Cron:    cron,
+		Logger:  logger,
+		Session: session,
 	}
 }
 
 func (u *Usecase) CreateTask() *cron.Cron {
 	u.Cron = cron.New(cron.WithParser(cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)))
 	ctx := context.Background()
-	Result, err := u.Redis.Get(ctx, "worker:lists").Result()
+
+	Result, err := u.Session.Get(ctx, "worker:lists")
 	if err != nil {
-		if err.Error() != "redis: nil" {
-			return u.Cron
-		}
+		return u.Cron
 	}
 
 	tasks := []libs.Tasks{}
-	if Result == "" {
-		Result = `[]`
+	if string(Result) == "" {
+		Result = []byte("[]")
 	}
 
-	json.Unmarshal([]byte(Result), &tasks)
+	json.Unmarshal(Result, &tasks)
 	for _, task := range tasks {
 		for _, value := range task.Tasks {
 			project := task.Project
@@ -64,22 +63,21 @@ func (u *Usecase) CreateTask() *cron.Cron {
 
 func (u *Usecase) CompareJobs() {
 	ctx := context.Background()
-	compare, err := u.Redis.Get(ctx, "worker:is_change").Result()
+	compare, err := u.Session.Get(ctx, "worker:is_change")
 	if err != nil {
-		if err.Error() != "redis: nil" {
-			return
-		}
+		return
 	}
-	if compare == "1" {
+
+	if string(compare) == "1" {
 		crns := cron.New(cron.WithParser(cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)))
 		tasks := []libs.Tasks{}
-		lists, err := u.Redis.Get(ctx, "worker:lists").Result()
+		lists, err := u.Session.Get(ctx, "worker:lists")
 		if err != nil {
 			if err.Error() != "redis: nil" {
 				return
 			}
 		}
-		json.Unmarshal([]byte(lists), &tasks)
+		json.Unmarshal(lists, &tasks)
 		for _, task := range tasks {
 			for _, value := range task.Tasks {
 				project := task.Project
@@ -97,7 +95,7 @@ func (u *Usecase) CompareJobs() {
 		crns.Start()
 		u.Cron = crns
 
-		if u.Redis.Set(ctx, "worker:is_change", 0, 0).Err() != nil {
+		if u.Session.Set(ctx, "worker:is_change", []byte("0")) != nil {
 			return
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"codebase/go-codebase/cronjobs/config"
 	"codebase/go-codebase/cronjobs/registry"
 	"codebase/go-codebase/cronjobs/usecase"
+	"codebase/go-codebase/session"
 	"os"
 
 	"github.com/go-redis/redis/v8"
@@ -18,7 +19,8 @@ func Init(logger *logrus.Logger) (rabbitmq *amqp.Connection, redis *redis.Client
 	redis = cfg.Redis(os.Getenv("REDIS"), "")
 	register := registry.NewRegister(rabbitmq)
 	initcron := cron.New(cron.WithParser(cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)))
-	usecase := usecase.CreateUsecase(logger, register, redis, initcron)
+	sesi := session.NewRedisSessionStoreAdapter(redis, 0)
+	usecase := usecase.CreateUsecase(logger, register, initcron, sesi)
 	crn = usecase.CreateTask()
 
 	return

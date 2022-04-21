@@ -9,7 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-redis/redis/v8"
+	"codebase/go-codebase/session"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 )
@@ -28,17 +29,17 @@ type CronsWorker struct {
 	Registry registry.RabbitMQ
 	Mutex    sync.Mutex
 	Logger   *logrus.Logger
-	Redis    *redis.Client
 	Project  string
 	Task     []Task
+	Session  session.Session
 }
 
-func CreateWorkerClient(logger *logrus.Logger, redis *redis.Client, project string, connMQ *amqp.Connection) *CronsWorker {
+func CreateWorkerClient(logger *logrus.Logger, project string, connMQ *amqp.Connection, session session.Session) *CronsWorker {
 	return &CronsWorker{
 		Logger:   logger,
-		Redis:    redis,
 		Project:  project,
 		Registry: registry.NewRegister(connMQ),
+		Session:  session,
 	}
 }
 
@@ -55,16 +56,13 @@ func (c *CronsWorker) SetListWorker(ctx context.Context) {
 	tasks := []Tasks{}
 	isNewProject := true
 
-	Result, err := c.Redis.Get(ctx, "worker:lists").Result()
+	Result, err := c.Session.Get(ctx, "worker:lists")
 	if err != nil {
-		if err.Error() != "redis: nil" {
-			c.Logger.Error(err.Error())
-			return
-		}
+		c.Logger.Error(err.Error())
+		return
 	}
 
-	rsltByte := []byte(Result)
-	json.Unmarshal(rsltByte, &tasks)
+	json.Unmarshal(Result, &tasks)
 
 	if c.Task == nil {
 		c.Task = []Task{}
@@ -90,14 +88,15 @@ func (c *CronsWorker) SetListWorker(ctx context.Context) {
 		c.Logger.Error(err.Error())
 	}
 
-	if c.Redis.Set(ctx, "worker:lists", data, 0).Err() != nil {
+	err = c.Session.Set(ctx, "worker:lists", data)
+	if err != nil {
 		c.Logger.Error(err.Error())
+		return
 	}
 
-	if Result != string(data) {
-		if c.Redis.Set(ctx, "worker:is_change", 1, 0).Err() != nil {
+	if string(Result) != string(data) {
+		if c.Session.Set(ctx, "worker:is_change", []byte("1")) != nil {
 			c.Logger.Error(err.Error())
-			return
 		}
 	}
 }

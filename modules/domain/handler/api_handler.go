@@ -12,34 +12,30 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
-	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 )
 
 type APIHandler struct {
 	Usecase   interfaces.Usecase_Interface
-	Rds       *redis.Client
 	Logger    *logrus.Logger
 	Res       responses.GinResponses
 	Validator *validator.Validate
 }
 
 var usecase interfaces.Usecase_Interface
-var rdsClient *redis.Client
 var customLogger *logrus.Logger
 var response responses.GinResponses
 var validate *validator.Validate
 
-func CreateHandler(Usecase interfaces.Usecase_Interface, rds *redis.Client, logger *logrus.Logger, res responses.GinResponses, vldtr *validator.Validate) {
+func CreateHandler(Usecase interfaces.Usecase_Interface, logger *logrus.Logger, res responses.GinResponses, vldtr *validator.Validate) {
 	usecase = Usecase
-	rdsClient = rds
 	customLogger = logger
 	response = res
 	validate = vldtr
 }
 
 func GetHandler() *APIHandler {
-	return &APIHandler{usecase, rdsClient, customLogger, response, validate}
+	return &APIHandler{usecase, customLogger, response, validate}
 }
 
 func (a *APIHandler) Test(c *gin.Context) {
