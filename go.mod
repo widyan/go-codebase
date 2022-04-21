@@ -19,6 +19,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.0
+	github.com/vektra/mockery/v2 v2.11.0 // indirect
 	gitlab.com/hanafi.firdaus/go-gin-codebase-modules v0.0.0-20220328131817-61b68cc437f4
 	go.elastic.co/apm/module/apmgin v1.15.0
 	go.elastic.co/apm/module/apmgoredisv8 v1.15.0
@@ -26,5 +27,5 @@ require (
 	go.elastic.co/apm/module/apmlogrus v1.15.0
 	go.elastic.co/apm/module/apmsql v1.15.0
 	gopkg.in/sohlich/elogrus.v7 v7.0.0
-	honnef.co/go/tools v0.0.1-2019.2.3
+	honnef.co/go/tools v0.0.1-2020.1.4
 )

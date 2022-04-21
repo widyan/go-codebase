@@ -1,6 +1,7 @@
 package scheduller
 
 import (
+	"codebase/go-codebase/cronjobs/registry"
 	"codebase/go-codebase/cronjobs/usecase"
 	"codebase/go-codebase/session"
 	"context"
@@ -14,8 +15,8 @@ type SchedullerImpl struct {
 	CronWorker *usecase.CronsWorker
 }
 
-func CreateScheduller(connMQ *amqp.Connection, logger *logrus.Logger, project string, session session.Session) *SchedullerImpl {
-	uscaseWorker := usecase.CreateWorkerClient(logger, project, connMQ, session)
+func CreateScheduller(connMQ *amqp.Connection, logger *logrus.Logger, project string, session session.Session, Registry registry.RabbitMQ) *SchedullerImpl {
+	uscaseWorker := usecase.CreateWorkerClient(logger, project, connMQ, session, Registry)
 	return &SchedullerImpl{
 		CronWorker: uscaseWorker,
 		Ctx:        context.Background(),

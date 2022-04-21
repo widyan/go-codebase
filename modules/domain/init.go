@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"codebase/go-codebase/cronjobs/registry"
 	"codebase/go-codebase/responses"
 	"codebase/go-codebase/session"
 	"database/sql"
@@ -46,7 +47,8 @@ func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *
 	handler.CreateHandler(userUsecase, logger, response, validator) // Assign function repository for using on handler
 
 	sesi := session.NewRedisSessionStoreAdapter(redis, 0)
-	initCron := scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), sesi)
+	initregistry := registry.NewRegister(connMQ)
+	initCron := scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), sesi, initregistry)
 	initCron.InitJob()
 
 	hndler := CreateRoutes(routesGin, middle)

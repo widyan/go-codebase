@@ -21,14 +21,14 @@ func CreateSchedullerTest() *TestSchedullerImpl {
 		Ctx: context.Background(),
 		Service: SchedullerImpl{
 			Ctx:        context.Background(),
-			CronWorker: usecase.CreateWorkerClient(logger, "", nil, nil),
+			CronWorker: usecase.CreateWorkerClient(logger, "", nil, nil, nil),
 		},
 	}
 }
 
 func TestTestScheduller(t *testing.T) {
 	var session session.Session
-	CreateScheduller(nil, logrus.New(), "", session)
+	CreateScheduller(nil, logrus.New(), "", session, nil)
 	s := CreateSchedullerTest()
 	s.Service.TestScheduller()
 	var err error

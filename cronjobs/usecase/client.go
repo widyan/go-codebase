@@ -34,11 +34,12 @@ type CronsWorker struct {
 	Session  session.Session
 }
 
-func CreateWorkerClient(logger *logrus.Logger, project string, connMQ *amqp.Connection, session session.Session) *CronsWorker {
+func CreateWorkerClient(logger *logrus.Logger, project string, connMQ *amqp.Connection, session session.Session, registry registry.RabbitMQ) *CronsWorker {
 	return &CronsWorker{
-		Logger:   logger,
-		Project:  project,
-		Registry: registry.NewRegister(connMQ),
+		Logger:  logger,
+		Project: project,
+		// Registry: registry.NewRegister(connMQ),
+		Registry: registry,
 		Session:  session,
 	}
 }
@@ -83,11 +84,7 @@ func (c *CronsWorker) SetListWorker(ctx context.Context) {
 		tasks = append(tasks, Tasks{Project: c.Project, Tasks: c.Task})
 	}
 
-	data, err := json.Marshal(tasks)
-	if err != nil {
-		c.Logger.Error(err.Error())
-	}
-
+	data, _ := json.Marshal(tasks)
 	err = c.Session.Set(ctx, "worker:lists", data)
 	if err != nil {
 		c.Logger.Error(err.Error())

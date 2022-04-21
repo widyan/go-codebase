@@ -73,9 +73,8 @@ func (u *Usecase) CompareJobs() {
 		tasks := []libs.Tasks{}
 		lists, err := u.Session.Get(ctx, "worker:lists")
 		if err != nil {
-			if err.Error() != "redis: nil" {
-				return
-			}
+			u.Logger.Error(err)
+			return
 		}
 		json.Unmarshal(lists, &tasks)
 		for _, task := range tasks {
