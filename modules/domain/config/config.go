@@ -5,8 +5,8 @@ import (
 	"database/sql"
 
 	"github.com/go-redis/redis/v8"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	amqp "github.com/streadway/amqp"
 )
 
 type Config struct {

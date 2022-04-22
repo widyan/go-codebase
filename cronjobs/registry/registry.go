@@ -4,7 +4,8 @@ import (
 	"codebase/go-codebase/cronjobs/libs"
 	"log"
 
-	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
+	amqp "github.com/streadway/amqp"
 )
 
 type RabbitMQ interface {
@@ -13,16 +14,21 @@ type RabbitMQ interface {
 }
 
 type RabbitMQImpl struct {
-	Conn *amqp.Connection
+	Conn   *amqp.Connection
+	Logger *logrus.Logger
 }
 
-func NewRegister(conn *amqp.Connection) RabbitMQ {
-	return &RabbitMQImpl{conn}
+func NewRegister(conn *amqp.Connection, logger *logrus.Logger) RabbitMQ {
+	return &RabbitMQImpl{conn, logger}
 }
 
 func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 	ch, err := r.Conn.Channel()
-	libs.FailOnError(err, "Failed to open a channel")
+	// libs.FailOnError(err, "Failed to open a channel")
+	if err != nil {
+		r.Logger.Error(err)
+		return
+	}
 
 	q, err := ch.QueueDeclare(
 		project+":"+task, // name
@@ -34,7 +40,11 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 			"x-expires": 1000,
 		}, // arguments
 	)
-	libs.FailOnError(err, "Failed to declare a queue")
+	// libs.FailOnError(err, "Failed to declare a queue")
+	if err != nil {
+		r.Logger.Error(err)
+		return
+	}
 
 	err = ch.Qos(
 		1,     // prefetch count
@@ -42,7 +52,11 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 		false, // global
 	)
 
-	libs.FailOnError(err, "Failed to set QoS")
+	// libs.FailOnError(err, "Failed to set QoS")
+	if err != nil {
+		r.Logger.Error(err)
+		return
+	}
 
 	msgs, err := ch.Consume(
 		q.Name, // queue
@@ -53,7 +67,11 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 		false,  // no-wait
 		nil,    // args
 	)
-	libs.FailOnError(err, "Failed to register a consumer")
+	// libs.FailOnError(err, "Failed to register a consumer")
+	if err != nil {
+		r.Logger.Error(err)
+		return
+	}
 
 	var forever chan struct{}
 
@@ -72,7 +90,11 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 
 func (r *RabbitMQImpl) RunJobs(project, task string) {
 	ch, err := r.Conn.Channel()
-	libs.FailOnError(err, "Failed to open a channel")
+	// libs.FailOnError(err, "Failed to open a channel")
+	if err != nil {
+		r.Logger.Error(err)
+		return
+	}
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
@@ -85,7 +107,11 @@ func (r *RabbitMQImpl) RunJobs(project, task string) {
 			"x-expires": 1000,
 		}, // arguments
 	)
-	libs.FailOnError(err, "Failed to open a channel")
+	// libs.FailOnError(err, "Failed to open a channel")
+	if err != nil {
+		r.Logger.Error(err)
+		return
+	}
 
 	// body := bodyFrom(os.Args)
 	err = ch.Publish(

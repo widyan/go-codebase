@@ -1,7 +1,7 @@
 package config
 
 import (
-	amqp "github.com/rabbitmq/amqp091-go"
+	amqp "github.com/streadway/amqp"
 )
 
 func (c *ConfigImpl) RabbitMQ(addrs string) *amqp.Connection {

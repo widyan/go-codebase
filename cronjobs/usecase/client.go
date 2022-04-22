@@ -11,8 +11,8 @@ import (
 
 	"codebase/go-codebase/session"
 
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	amqp "github.com/streadway/amqp"
 )
 
 type Task struct {
@@ -45,7 +45,8 @@ func CreateWorkerClient(logger *logrus.Logger, project string, connMQ *amqp.Conn
 }
 
 func (c *CronsWorker) AddJob(cron string, job func()) {
-	service := strings.ReplaceAll(strings.Split(runtime.FuncForPC(reflect.ValueOf(job).Pointer()).Name(), ".")[2], "-fm", "")
+	lns := len(strings.Split(runtime.FuncForPC(reflect.ValueOf(job).Pointer()).Name(), "."))
+	service := strings.ReplaceAll(strings.Split(runtime.FuncForPC(reflect.ValueOf(job).Pointer()).Name(), ".")[lns-1], "-fm", "")
 	c.Mutex.Lock()
 	c.Task = append(c.Task, Task{Name: service, Cron: cron})
 	c.Mutex.Unlock()
@@ -92,8 +93,10 @@ func (c *CronsWorker) SetListWorker(ctx context.Context) {
 	}
 
 	if string(Result) != string(data) {
-		if c.Session.Set(ctx, "worker:is_change", []byte("1")) != nil {
+		err := c.Session.Set(ctx, "worker:is_change", []byte("1"))
+		if err != nil {
 			c.Logger.Error(err.Error())
+			return
 		}
 	}
 }

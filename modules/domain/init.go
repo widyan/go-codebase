@@ -17,11 +17,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"github.com/go-redis/redis/v8"
-	"github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 )
 
-func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *redis.Client, *amqp091.Connection) {
+func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *redis.Client, *amqp.Connection) {
 
 	cfg := config.CreateConfig(logger)
 	redis := cfg.Redis(os.Getenv("REDIS"), "")
@@ -47,7 +47,7 @@ func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *
 	handler.CreateHandler(userUsecase, logger, response, validator) // Assign function repository for using on handler
 
 	sesi := session.NewRedisSessionStoreAdapter(redis, 0)
-	initregistry := registry.NewRegister(connMQ)
+	initregistry := registry.NewRegister(connMQ, logger)
 	initCron := scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), sesi, initregistry)
 	initCron.InitJob()
 
