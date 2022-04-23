@@ -24,11 +24,7 @@ func NewRegister(conn *amqp.Connection, logger *logrus.Logger) RabbitMQ {
 
 func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 	ch, err := r.Conn.Channel()
-	// libs.FailOnError(err, "Failed to open a channel")
-	if err != nil {
-		r.Logger.Error(err)
-		return
-	}
+	libs.FailOnError(err, "Failed to open a channel")
 
 	q, err := ch.QueueDeclare(
 		project+":"+task, // name
@@ -40,11 +36,7 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 			"x-expires": 1000,
 		}, // arguments
 	)
-	// libs.FailOnError(err, "Failed to declare a queue")
-	if err != nil {
-		r.Logger.Error(err)
-		return
-	}
+	libs.FailOnError(err, "Failed to declare a queue")
 
 	err = ch.Qos(
 		1,     // prefetch count
@@ -52,11 +44,7 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 		false, // global
 	)
 
-	// libs.FailOnError(err, "Failed to set QoS")
-	if err != nil {
-		r.Logger.Error(err)
-		return
-	}
+	libs.FailOnError(err, "Failed to set QoS")
 
 	msgs, err := ch.Consume(
 		q.Name, // queue
@@ -67,11 +55,7 @@ func (r *RabbitMQImpl) Worker(project, task string, job func()) {
 		false,  // no-wait
 		nil,    // args
 	)
-	// libs.FailOnError(err, "Failed to register a consumer")
-	if err != nil {
-		r.Logger.Error(err)
-		return
-	}
+	libs.FailOnError(err, "Failed to register a consumer")
 
 	var forever chan struct{}
 
