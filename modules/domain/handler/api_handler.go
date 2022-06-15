@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator"
 	"github.com/sirupsen/logrus"
 )
@@ -49,6 +50,37 @@ func (a *APIHandler) Test(c *gin.Context) {
 	json.Unmarshal(bind, &User)
 	json.NewEncoder(c.Writer).Encode(User.Data)
 	// a.Res.Json(c, http.StatusOK, User.Data, "testing")
+}
+
+type Booking struct {
+	CheckIn  string `form:"check_in" validate:"required"`
+	CheckOut string `form:"check_out" validate:"required"`
+}
+
+func (a *APIHandler) TestingForm(c *gin.Context) {
+
+	var request Booking
+
+	if err := c.ShouldBindWith(&request, binding.Query); err != nil {
+		a.Res.Json(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	err := a.Validator.Struct(request)
+	if err != nil {
+		if _, ok := err.(*validator.InvalidValidationError); ok {
+			a.Logger.Error(err.Error())
+			a.Res.Json(c, http.StatusBadRequest, nil, err.Error())
+			return
+		}
+
+		for _, err := range err.(validator.ValidationErrors) {
+			a.Res.Json(c, http.StatusBadRequest, nil, err.Field()+" "+err.Tag())
+			return
+		}
+	}
+
+	a.Res.Json(c, http.StatusOK, request, "Success")
 }
 
 func (a *APIHandler) InsertUser(c *gin.Context) {

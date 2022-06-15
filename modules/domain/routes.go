@@ -39,6 +39,7 @@ func (handlers Handlers) Routes() *gin.Engine {
 		jwtAuth.POST("/user", handlers.DomainHandler.InsertUser)
 		jwtAuth.GET("/user/one", handlers.DomainHandler.GetOneUser)
 		jwtAuth.PUT("/user/:id", handlers.DomainHandler.UpdateFullnameUserByID)
+		jwtAuth.PUT("/formdata", handlers.DomainHandler.TestingForm)
 	}
 
 	return handlers.RoutesGin
