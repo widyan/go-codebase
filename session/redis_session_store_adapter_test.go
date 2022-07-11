@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"codebase/go-codebase/session"
+	"github.com/widyan/go-codebase/session"
 
 	redismock "github.com/go-redis/redismock/v8"
 )

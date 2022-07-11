@@ -1,13 +1,14 @@
 package responses
 
 import (
-	"codebase/go-codebase/helper"
-	"codebase/go-codebase/model"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/widyan/go-codebase/helper"
+	"github.com/widyan/go-codebase/model"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

@@ -1,10 +1,11 @@
 package repository
 
 import (
-	"codebase/go-codebase/helper/null"
-	"codebase/go-codebase/modules/domain/entity"
 	"context"
 	"fmt"
+
+	"github.com/widyan/go-codebase/helper/null"
+	"github.com/widyan/go-codebase/modules/domain/entity"
 )
 
 const (

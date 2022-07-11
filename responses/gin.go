@@ -1,9 +1,10 @@
 package responses
 
 import (
-	"codebase/go-codebase/model"
 	"encoding/json"
 	"strconv"
+
+	"github.com/widyan/go-codebase/model"
 
 	"github.com/gin-gonic/gin"
 )

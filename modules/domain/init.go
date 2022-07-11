@@ -1,56 +1,29 @@
 package domain
 
 import (
-	"codebase/go-codebase/responses"
 	"database/sql"
-	"os"
 
-	"codebase/go-codebase/middleware"
-	"codebase/go-codebase/modules/domain/config"
-	"codebase/go-codebase/modules/domain/handler"
-	"codebase/go-codebase/modules/domain/repository"
-	"codebase/go-codebase/modules/domain/usecase"
+	"github.com/widyan/go-codebase/responses"
+
+	"github.com/widyan/go-codebase/middleware/interfaces"
+	"github.com/widyan/go-codebase/modules/domain/handler"
+	"github.com/widyan/go-codebase/modules/domain/repository"
+	"github.com/widyan/go-codebase/modules/domain/usecase"
+	validate "github.com/widyan/go-codebase/validator"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
-	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 )
 
-func Init(routesGin *gin.Engine, logger *logrus.Logger) (*gin.Engine, *sql.DB, *redis.Client, *amqp.Connection) {
+func Init(routesGin *gin.Engine, logger *logrus.Logger, validator validate.ValidatorInterface, pq *sql.DB, cfgRseponses responses.GinResponses, authUsecase interfaces.UsecaseInterface) {
 
-	cfg := config.CreateConfig(logger)
-	redis := cfg.Redis(os.Getenv("REDIS"), "")
-	db := cfg.Postgresql(os.Getenv("GORM_CONNECTION"), "postgres", 20, 20)
-	// connMQ := cfg.RabbitMQ(os.Getenv("RABBITMQ"))
-
-	//dbRead := config.Postgresql(logger) // settingan dbRead postgresql
-	//dbWrite := config.Postgresql(logger) // settingan dbWrite postgresql
-
-	// redis := rds.Redis(logger)
-	response := responses.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
-
-	repo := repository.CreateRepository(db, db, logger) // Create transaction from db
+	repo := repository.CreateRepository(pq, pq, logger) // Create transaction from db
 	userUsecase := usecase.CreateUsecase(repo, logger)
 
-	//init JWT
-	middle := middleware.Init(logger, response)
+	handler.CreateHandler(userUsecase, logger, cfgRseponses, validator) // Assign function repository for using on handler
 
-	validator := validator.New()
-
-	response = responses.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
-
-	handler.CreateHandler(userUsecase, logger, response, validator) // Assign function repository for using on handler
-
-	// sesi := session.NewRedisSessionStoreAdapter(redis, 0)
-	// initregistry := registry.NewRegister(connMQ, logger)
-	// initCron := scheduller.CreateScheduller(connMQ, logger, os.Getenv("DOMAIN_NAME"), sesi, initregistry)
-	// initCron.InitJob()
-
-	hndler := CreateRoutes(routesGin, middle)
+	hndler := CreateRoutes(routesGin, authUsecase)
 
 	routesGin = hndler.Routes()
 
-	return routesGin, db, redis, nil
 }

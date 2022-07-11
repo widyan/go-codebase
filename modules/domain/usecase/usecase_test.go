@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	"codebase/go-codebase/modules/domain/entity"
-	"codebase/go-codebase/modules/domain/repository"
 	"context"
+	"github.com/widyan/go-codebase/modules/domain/entity"
+	"github.com/widyan/go-codebase/modules/domain/repository"
 	"testing"
 	"time"
 

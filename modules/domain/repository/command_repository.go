@@ -1,9 +1,10 @@
 package repository
 
 import (
-	"codebase/go-codebase/modules/domain/entity"
 	"context"
 	"database/sql"
+
+	"github.com/widyan/go-codebase/modules/domain/entity"
 
 	"github.com/sirupsen/logrus"
 )
