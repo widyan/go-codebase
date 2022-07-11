@@ -4,23 +4,33 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"codebase/go-codebase/model"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
+	"strings"
 
-	"go.elastic.co/apm/module/apmhttp"
+	"github.com/sirupsen/logrus"
+	"github.com/widyan/go-codebase/model"
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
+
+type ToolsAPI struct {
+	Logger *logrus.Logger
+}
+
+func CreateToolsAPI(logger *logrus.Logger) API_Interface {
+	return &ToolsAPI{logger}
+}
+
+type API_Interface interface {
+	CallAPI(ctx context.Context, url, method string, payload interface{}, header []model.Header) (body []byte, err error)
+	CallAPIFormData(ctx context.Context, url, method string, formData []model.FormData, headers []model.Header) (body []byte, err error)
+	SendToTelegram(url, method, tokenBOT, chatID, text string, IsContainArstik bool)
+}
 
 // CallAPI is
-
-var (
-	Buf    bytes.Buffer
-	Logger = log.New(&Buf, "logger: ", log.Lshortfile)
-)
-
-func CallAPI(ctx context.Context, logger *CustomLogger, url, method string, payload interface{}, header []model.Header) (body []byte, err error) {
+func (t *ToolsAPI) CallAPI(ctx context.Context, url, method string, payload interface{}, header []model.Header) (body []byte, err error) {
 	// var res *http.Response
 	body, err = json.Marshal(payload)
 	if err != nil {
@@ -41,7 +51,7 @@ func CallAPI(ctx context.Context, logger *CustomLogger, url, method string, payl
 		req.Header.Add(e.Key, e.Value)
 	}
 
-	client := apmhttp.WrapClient(http.DefaultClient)
+	client := httptrace.WrapClient(http.DefaultClient)
 	res, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		// apm.CaptureError(ctx, err).Send()
@@ -51,14 +61,14 @@ func CallAPI(ctx context.Context, logger *CustomLogger, url, method string, payl
 	defer res.Body.Close()
 	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		logger.Error(err.Error())
+		t.Logger.Error(err.Error())
 		return
 	}
 
 	return
 }
 
-func CallAPIFormData(logger CustomLogger, url, method string, formData []model.FormData, headers []model.Header) (body []byte, err error) {
+func (t *ToolsAPI) CallAPIFormData(ctx context.Context, url, method string, formData []model.FormData, headers []model.Header) (body []byte, err error) {
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
 	for _, element := range formData {
@@ -66,14 +76,14 @@ func CallAPIFormData(logger CustomLogger, url, method string, formData []model.F
 	}
 	err = writer.Close()
 	if err != nil {
-		logger.Error(err.Error())
+		t.Logger.Error(err.Error())
 		return
 	}
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
-		logger.Error(err.Error())
+		t.Logger.Error(err.Error())
 		return
 	}
 
@@ -81,7 +91,7 @@ func CallAPIFormData(logger CustomLogger, url, method string, formData []model.F
 	for _, e := range headers {
 		req.Header.Add(e.Key, e.Value)
 	}
-	res, err := client.Do(req)
+	res, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return
 	}
@@ -89,9 +99,36 @@ func CallAPIFormData(logger CustomLogger, url, method string, formData []model.F
 
 	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		logger.Error(err.Error())
+		t.Logger.Error(err.Error())
+		return
+	}
+
+	if res.StatusCode > 399 {
+		err = fmt.Errorf(string(body))
+		t.Logger.Error(err.Error())
 		return
 	}
 
 	return
+}
+
+func (t *ToolsAPI) SendToTelegram(url, method, tokenBOT, chatID, text string, IsContainArstik bool) {
+	client := &http.Client{}
+	payload := strings.NewReader("chat_id=" + chatID + "&text=" + text + "&parse_mode=Markdown")
+	if IsContainArstik {
+		payload = strings.NewReader("chat_id=" + chatID + "&text=" + text)
+	}
+	req, err := http.NewRequest("POST", url+tokenBOT+"/sendMessage", payload)
+	if err != nil {
+		t.Logger.Error(err.Error())
+	}
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	res, err := client.Do(req)
+	if err != nil {
+		t.Logger.Error(err.Error())
+		return
+	}
+	defer res.Body.Close()
 }

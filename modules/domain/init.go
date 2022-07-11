@@ -1,27 +1,29 @@
 package domain
 
 import (
-	"codebase/go-codebase/helper"
-	"codebase/go-codebase/service/api"
-	"codebase/go-codebase/service/tools"
-	"codebase/go-codebase/service/worker"
 	"database/sql"
-	"github.com/go-redis/redis/v8"
-	"os"
+
+	"github.com/widyan/go-codebase/responses"
+
+	"github.com/widyan/go-codebase/middleware/interfaces"
+	"github.com/widyan/go-codebase/modules/domain/handler"
+	"github.com/widyan/go-codebase/modules/domain/repository"
+	"github.com/widyan/go-codebase/modules/domain/usecase"
+	validate "github.com/widyan/go-codebase/validator"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
-func Init(dbRead, dbWrite *sql.DB, redis *redis.Client, logger *helper.CustomLogger) *Usecase {
+func Init(routesGin *gin.Engine, logger *logrus.Logger, validator validate.ValidatorInterface, pq *sql.DB, cfgRseponses responses.GinResponses, authUsecase interfaces.UsecaseInterface) {
 
-	repo := CreateRepository(dbWrite, dbRead, logger) // Create transaction from db
-	apis := api.CreateApi(redis, logger)
-	workers := worker.CreateWorker(logger)
-	tools := tools.CreateTools(logger)
-	userUsecase := CreateUsecase(repo, apis, workers, tools, logger)
+	repo := repository.CreateRepository(pq, pq, logger) // Create transaction from db
+	userUsecase := usecase.CreateUsecase(repo, logger)
 
-	response := helper.CreateCustomResponses(os.Getenv("DOMAIN_NAME"))
+	handler.CreateHandler(userUsecase, logger, cfgRseponses, validator) // Assign function repository for using on handler
 
-	CreateHandler(userUsecase, redis, logger, response) // Assign function repository for using on handler
+	hndler := CreateRoutes(routesGin, authUsecase)
 
-	return userUsecase
+	routesGin = hndler.Routes()
+
 }
-

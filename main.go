@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"codebase/go-codebase/helper"
-	"codebase/go-codebase/initiation"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path"
@@ -15,12 +14,23 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-playground/validator/v10"
+	config "github.com/widyan/go-codebase/config/apm"
+	"github.com/widyan/go-codebase/helper"
+	"github.com/widyan/go-codebase/middleware"
+	"github.com/widyan/go-codebase/modules/domain"
+	"github.com/widyan/go-codebase/notification"
+	"github.com/widyan/go-codebase/responses"
+
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
+	validate "github.com/widyan/go-codebase/validator"
+	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmgin"
 	"go.elastic.co/apm/module/apmhttp"
-	"go.elastic.co/apm/module/apmlogrus"
+	"go.elastic.co/apm/transport"
 )
 
 func main() {
@@ -30,6 +40,8 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("%s: %s", "Failed to load env", err))
 	}
+
+	response := responses.CreateCustomResponses(os.Getenv("PROJECT_NAME"))
 
 	var logger = logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{
@@ -42,38 +54,79 @@ func main() {
 		},
 	})
 	logger.SetReportCaller(true)
-	logger.AddHook(&apmlogrus.Hook{
-		LogLevels: logrus.AllLevels,
-	})
+	// logger.Hooks.Add(&apmlogrus.Hook{
+	// 	LogLevels: logrus.AllLevels,
+	// })
 
-	/*clients, err := elastic.NewClient(elastic.SetURL(os.Getenv("URL_ELASTIC_SEARCH")))
-	if err != nil {
-		logger.Panic(err)
-	}
-	hook, err := elogrus.NewAsyncElasticHook(clients, "localhost", logrus.DebugLevel, "log_useetv_services")
-	if err != nil {
-		logger.Panic(err)
-	}
-	logger.Hooks.Add(hook)*/
+	toolsAPI := helper.CreateToolsAPI(logger)
+	notifTelegram := notification.CreateNotification(toolsAPI, os.Getenv("PROJECT_NAME"), os.Getenv("TOKEN_BOT_TELEGRAM"), os.Getenv("CHAT_ID"))
+	logger.AddHook(notifTelegram)
 
-	logs := helper.CreateLogger(logger)
+	validator := validator.New()
+	vldt := validate.CreateValidator(validator)
 
-	// var lo logger.Loggers
+	cfg := config.CreateConfigImplAPM(logger)
+	pq := cfg.Postgresql(os.Getenv("GORM_CONNECTION"), 20, 20)
+	pqdbAuth := cfg.Postgresql(os.Getenv("POSTGRES_AUTH_CONNECTION"), 20, 20)
+
 	routesGin := gin.New()
 	if os.Getenv("MODE") == "development" {
-		// pprof.Register(routesGin)
+		pprof.Register(routesGin)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	routesGin.Use(apmgin.Middleware(routesGin))
 
-	routesGin, pq, redis := initiation.Init(routesGin, logs)
+	// ************************************ Setting APM ************************************
+	apm.DefaultTracer.Close()
+	tracer, err := apm.NewTracer("", "")
+	if err != nil {
+		logger.Panic(err)
+	}
+
+	transport, err := transport.NewHTTPTransport()
+	if err != nil {
+		logger.Panic(err)
+	}
+
+	// transport.SetSecretToken(os.Getenv("ELASTIC_APM_SECRET_TOKEN"))
+	u, err := url.Parse(os.Getenv("ELASTIC_APM_SERVER_URL"))
+	if err != nil {
+		logger.Panic(err)
+	}
+
+	transport.SetServerURL(u)
+	tracer.Transport = transport
+
+	auth := middleware.Init(routesGin, logger, pqdbAuth, vldt, response)
+	domain.Init(routesGin, logger, vldt, pq, response, auth)
 	s := &http.Server{
 		Addr:         os.Getenv("PORT"),
 		Handler:      apmhttp.Wrap(routesGin),
 		WriteTimeout: time.Second * 60,
 		ReadTimeout:  time.Second * 30,
 	}
+	// *****************************************************************************************
+
+	/*
+		// ************************************ Setting DATADOG ************************************
+
+		//import this librrary if you want setting datadog
+		//"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+		//gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
+
+		tracer.Start()
+		defer tracer.Stop()
+
+		routesGin.Use(gintrace.Middleware("metanesia-payment"))
+		s := &http.Server{
+			Addr:         os.Getenv("PORT"),
+			Handler:      routesGin,
+			WriteTimeout: time.Second * 60,
+			ReadTimeout:  time.Second * 30,
+		}
+		// *****************************************************************************************
+	*/
 
 	go func() {
 		if err := s.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
@@ -102,8 +155,10 @@ func main() {
 	}
 
 	logger.Println("Server exiting")
-	logger.Println("Close clonnection postgresql")
-	logger.Println("Close clonnection redis")
+	logger.Println("Close connection postgresql")
 	pq.Close()
-	redis.Close()
+	pqdbAuth.Close()
+	// logger.Println("Close connection amqp")
+	// amqp.Close()
+
 }
