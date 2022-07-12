@@ -58,17 +58,26 @@ func main() {
 	// 	LogLevels: logrus.AllLevels,
 	// })
 
+	// Get dependency call API
 	toolsAPI := helper.CreateToolsAPI(logger)
+
+	// ************************************ Setting notification to telegram if become error ***********
 	notifTelegram := notification.CreateNotification(toolsAPI, os.Getenv("PROJECT_NAME"), os.Getenv("TOKEN_BOT_TELEGRAM"), os.Getenv("CHAT_ID"))
 	logger.AddHook(notifTelegram)
+	// *************************************************************************************************
 
+	// ************************************ Get dependency validator ***********************************
 	validator := validator.New()
 	vldt := validate.CreateValidator(validator)
+	// *************************************************************************************************
 
+	// ************************************ Config for implement DB ************************************
 	cfg := config.CreateConfigImplAPM(logger)
 	pq := cfg.Postgresql(os.Getenv("GORM_CONNECTION"), 20, 20)
 	pqdbAuth := cfg.Postgresql(os.Getenv("POSTGRES_AUTH_CONNECTION"), 20, 20)
+	// *************************************************************************************************
 
+	// ************************************ Implement Gin Gonic as Framework ***************************
 	routesGin := gin.New()
 	if os.Getenv("MODE") == "development" {
 		pprof.Register(routesGin)
@@ -76,6 +85,7 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	routesGin.Use(apmgin.Middleware(routesGin))
+	// **************************************************************************************************
 
 	// ************************************ Setting APM ************************************
 	apm.DefaultTracer.Close()
