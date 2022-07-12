@@ -102,7 +102,7 @@ func main() {
 	domain.Init(routesGin, logger, vldt, pq, response, auth)
 	s := &http.Server{
 		Addr:         os.Getenv("PORT"),
-		Handler:      apmhttp.Wrap(routesGin),
+		Handler:      apmhttp.Wrap(routesGin, apmhttp.WithTracer(tracer)),
 		WriteTimeout: time.Second * 60,
 		ReadTimeout:  time.Second * 30,
 	}
