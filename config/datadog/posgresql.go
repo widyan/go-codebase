@@ -4,11 +4,9 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	amqp "github.com/streadway/amqp"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/widyan/go-codebase/config"
 	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 )
 
@@ -16,14 +14,7 @@ type ConfigImpl struct {
 	Logger *logrus.Logger
 }
 
-type Config interface {
-	Postgresql(dsn string, SetMaxIdleConns, SetMaxOpenConns int) *sql.DB
-	Redis(address, password string) redis.UniversalClient
-	RabbitMQ(addrs string) *amqp.Connection
-	MongoDB(uri, database string) (*mongo.Client, *mongo.Database)
-}
-
-func CreateConfigImplDatadog(logger *logrus.Logger) Config {
+func CreateConfigImpl(logger *logrus.Logger) config.Config {
 	return &ConfigImpl{
 		Logger: logger,
 	}

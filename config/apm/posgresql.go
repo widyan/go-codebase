@@ -4,25 +4,16 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
-	amqp "github.com/streadway/amqp"
+	"github.com/widyan/go-codebase/config"
 	"go.elastic.co/apm/module/apmsql"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ConfigImpl struct {
 	Logger *logrus.Logger
 }
 
-type Config interface {
-	Postgresql(dsn string, SetMaxIdleConns, SetMaxOpenConns int) *sql.DB
-	Redis(address, password string) *redis.Client
-	RabbitMQ(addrs string) *amqp.Connection
-	MongoDB(uri, database string) (*mongo.Client, *mongo.Database)
-}
-
-func CreateConfigImplAPM(logger *logrus.Logger) Config {
+func CreateConfigImpl(logger *logrus.Logger) config.Config {
 	return &ConfigImpl{
 		Logger: logger,
 	}
