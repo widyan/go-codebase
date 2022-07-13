@@ -1,23 +1,22 @@
 package domain
 
 import (
-	"codebase/go-codebase/middleware/interfaces"
-	"codebase/go-codebase/modules/domain/handler"
 	"os"
+
+	"github.com/widyan/go-codebase/middleware/interfaces"
+	"github.com/widyan/go-codebase/modules/domain/handler"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Handlers struct {
 	RoutesGin     *gin.Engine
-	Jwt           interfaces.UsecaseMiddleware
 	DomainHandler *handler.APIHandler
 }
 
-func CreateRoutes(routesGin *gin.Engine, jwt interfaces.UsecaseMiddleware) *Handlers {
+func CreateRoutes(routesGin *gin.Engine, authUsecase interfaces.UsecaseInterface) *Handlers {
 	return &Handlers{
 		RoutesGin:     routesGin,
-		Jwt:           jwt,
 		DomainHandler: handler.GetHandler(),
 	}
 }
@@ -33,13 +32,16 @@ func (handlers Handlers) Routes() *gin.Engine {
 	jwtAuth.GET("/userall", handlers.DomainHandler.GetAllUsers)
 	jwtAuth.GET("/user/:id", handlers.DomainHandler.GetOneUserByID)
 
-	jwtAuth.Use(handlers.Jwt.VerifyAutorizationToken()) // Verify Authorization
-	{
-		jwtAuth.GET("/test", handlers.DomainHandler.Test)
-		jwtAuth.POST("/user", handlers.DomainHandler.InsertUser)
-		jwtAuth.GET("/user/one", handlers.DomainHandler.GetOneUser)
-		jwtAuth.PUT("/user/:id", handlers.DomainHandler.UpdateFullnameUserByID)
-	}
+	/*
+		jwtAuth.Use(handlers.Jwt.VerifyAutorizationToken()) // Verify Authorization
+		{
+			jwtAuth.GET("/test", handlers.DomainHandler.Test)
+			jwtAuth.POST("/user", handlers.DomainHandler.InsertUser)
+			jwtAuth.GET("/user/one", handlers.DomainHandler.GetOneUser)
+			jwtAuth.PUT("/user/:id", handlers.DomainHandler.UpdateFullnameUserByID)
+			jwtAuth.PUT("/formdata", handlers.DomainHandler.TestingForm)
+		}
+	*/
 
 	return handlers.RoutesGin
 }

@@ -1,13 +1,14 @@
 package helper
 
 import (
-	"codebase/go-codebase/model"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"net/smtp"
 	"time"
+
+	"github.com/widyan/go-codebase/model"
 
 	"go.elastic.co/apm/module/apmhttp"
 )

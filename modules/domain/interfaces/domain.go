@@ -1,8 +1,9 @@
 package interfaces
 
 import (
-	"codebase/go-codebase/modules/domain/entity"
 	"context"
+
+	"github.com/widyan/go-codebase/modules/domain/entity"
 )
 
 type Usecase_Interface interface {

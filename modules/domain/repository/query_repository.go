@@ -1,10 +1,11 @@
 package repository
 
 import (
-	"codebase/go-codebase/helper/null"
-	"codebase/go-codebase/modules/domain/entity"
 	"context"
 	"fmt"
+
+	"github.com/widyan/go-codebase/helper/null"
+	"github.com/widyan/go-codebase/modules/domain/entity"
 )
 
 const (
@@ -39,7 +40,7 @@ func (r *Repository) GetOneUser(ctx context.Context) (user entity.Users, err err
 }
 
 func (r *Repository) GetAllUsers(ctx context.Context) (users []entity.Users, err error) {
-	query := "select ss.id, ss.fullname, ss.no_hp, ss.is_attend, ss.created_at from sharing_session.users ss"
+	query := "select ss.id, ss.fullname, ss.no_hp, ss.is_attend, ss.created_at from users ss"
 	rows, err := r.DBRead.QueryContext(ctx, query)
 	if err != nil {
 		return
@@ -68,7 +69,7 @@ func (r *Repository) GetAllUsers(ctx context.Context) (users []entity.Users, err
 }
 
 func (r *Repository) GetOneUserByID(ctx context.Context, id int) (user entity.Users, err error) {
-	query := "select ss.id, ss.fullname, ss.no_hp, ss.is_attend, ss.created_at from sharing_session.users ss where ss.id = $1 limit 1"
+	query := "select ss.id, ss.fullname, ss.no_hp, ss.is_attend, ss.created_at from users ss where ss.id = $1 limit 1"
 	rows, err := r.DBRead.QueryContext(ctx, query, id)
 	if err != nil {
 		return

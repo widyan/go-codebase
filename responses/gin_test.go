@@ -1,13 +1,14 @@
 package responses
 
 import (
-	"codebase/go-codebase/helper"
-	"codebase/go-codebase/model"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/widyan/go-codebase/helper"
+	"github.com/widyan/go-codebase/model"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +20,14 @@ func TestJson(t *testing.T) {
 
 	testResp := CreateCustomResponses("test")
 	testResp.Json(c, http.StatusOK, "testing", "test")
+}
+
+func TestJson1(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	testResp := CreateCustomResponses("test")
+	testResp.Json(c, http.StatusNotFound, "testing", "test")
 }
 
 func TestJsonWithErrorCode(t *testing.T) {

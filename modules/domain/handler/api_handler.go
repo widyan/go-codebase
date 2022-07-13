@@ -1,84 +1,96 @@
 package handler
 
 import (
-	"codebase/go-codebase/helper"
-	middlemodel "codebase/go-codebase/middleware/model"
-	"codebase/go-codebase/modules/domain/entity"
-	"codebase/go-codebase/modules/domain/interfaces"
-	"codebase/go-codebase/responses"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
+	"github.com/widyan/go-codebase/helper"
+	"github.com/widyan/go-codebase/modules/domain/entity"
+	"github.com/widyan/go-codebase/modules/domain/interfaces"
+	"github.com/widyan/go-codebase/responses"
+	"github.com/widyan/go-codebase/validator"
+
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
-	"github.com/go-redis/redis/v8"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/sirupsen/logrus"
 )
 
 type APIHandler struct {
 	Usecase   interfaces.Usecase_Interface
-	Rds       *redis.Client
 	Logger    *logrus.Logger
 	Res       responses.GinResponses
-	Validator *validator.Validate
+	Validator validator.ValidatorInterface
 }
 
 var usecase interfaces.Usecase_Interface
-var rdsClient *redis.Client
 var customLogger *logrus.Logger
 var response responses.GinResponses
-var validate *validator.Validate
+var validate validator.ValidatorInterface
 
-func CreateHandler(Usecase interfaces.Usecase_Interface, rds *redis.Client, logger *logrus.Logger, res responses.GinResponses, vldtr *validator.Validate) {
+func CreateHandler(Usecase interfaces.Usecase_Interface, logger *logrus.Logger, res responses.GinResponses, vldtr validator.ValidatorInterface) {
 	usecase = Usecase
-	rdsClient = rds
 	customLogger = logger
 	response = res
 	validate = vldtr
 }
 
 func GetHandler() *APIHandler {
-	return &APIHandler{usecase, rdsClient, customLogger, response, validate}
+	return &APIHandler{usecase, customLogger, response, validate}
 }
 
 func (a *APIHandler) Test(c *gin.Context) {
-	var User middlemodel.VerifikasiToken
-	bind, ok := c.MustGet("bind").([]byte)
-	if !ok {
-		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, responses.ErrorKetikaMendapatkanDataUser)
+	/*
+		var User middlemodel.VerifikasiToken
+		bind, ok := c.MustGet("bind").([]byte)
+		if !ok {
+			a.Res.JsonWithErrorCode(c, http.StatusBadRequest, responses.ErrorKetikaMendapatkanDataUser)
+			return
+		}
+
+		json.Unmarshal(bind, &User)
+		json.NewEncoder(c.Writer).Encode(User.Data)
+	*/
+	a.Res.Json(c, http.StatusOK, map[string]interface{}{
+		"key": "value",
+	}, "testing")
+}
+
+type Booking struct {
+	CheckIn  string `form:"check_in" validate:"required"`
+	CheckOut string `form:"check_out" validate:"required"`
+}
+
+func (a *APIHandler) TestingForm(c *gin.Context) {
+
+	var request Booking
+
+	if err := c.ShouldBindWith(&request, binding.Query); err != nil {
+		a.Res.Json(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	json.Unmarshal(bind, &User)
-	json.NewEncoder(c.Writer).Encode(User.Data)
-	// a.Res.Json(c, http.StatusOK, User.Data, "testing")
+	err := a.Validator.ValidateRequest(request)
+	if err != nil {
+		a.Res.Json(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	if err := a.Validator.ValidateRequest(request); err != nil {
+		a.Res.Json(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	a.Res.Json(c, http.StatusOK, request, "Success")
 }
 
 func (a *APIHandler) InsertUser(c *gin.Context) {
 	var param entity.Users
-	if err := c.ShouldBindJSON(&param); err != nil {
-		a.Logger.Error(err.Error())
-		a.Res.JsonWithErrorCode(c, http.StatusBadRequest, responses.ParameterBodyTidakSesuai)
+
+	err := a.Validator.ValidateRequestWithGetBody(c, param)
+	if err != nil {
+		a.Res.Json(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
-
-	// a.Logger.ErrorWithContext(c, param, "Test out context")
-
-	err := a.Validator.Struct(param)
-	if err != nil {
-		if _, ok := err.(*validator.InvalidValidationError); ok {
-			a.Logger.Error(err.Error())
-			a.Res.Json(c, http.StatusBadRequest, nil, err.Error())
-			return
-		}
-
-		for _, err := range err.(validator.ValidationErrors) {
-			a.Res.Json(c, http.StatusBadRequest, nil, err.Field()+" "+err.Tag())
-			return
-		}
-	}
-
 	err = a.Usecase.InsertUser(c.Request.Context(), param)
 	if err != nil {
 		a.Res.Json(c, http.StatusInternalServerError, nil, err.Error())

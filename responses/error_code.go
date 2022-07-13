@@ -13,6 +13,9 @@ const (
 	TokenTidakBolehKosong                                 = 4009
 	IdTidakBoleh0                                         = 4010
 	InvalidToken                                          = 1111
+	UserNotAllowedAccess                                  = 1113
+	TokenIsNotAllowedEmpty                                = 1114
+	TokenExpired                                          = 1115
 )
 
 var ErrorCodeText = map[int]string{
@@ -28,4 +31,7 @@ var ErrorCodeText = map[int]string{
 	TokenTidakBolehKosong:                                 "Token tidak boleh kosong",
 	IdTidakBoleh0:                                         "Id tidak boleh 0",
 	InvalidToken:                                          "Invalid Token!",
+	UserNotAllowedAccess:                                  "User not allowed access",
+	TokenIsNotAllowedEmpty:                                "Token is not allowed empty",
+	TokenExpired:                                          "Token expired",
 }
