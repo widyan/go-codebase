@@ -9,7 +9,7 @@ import (
 func (r *Repository) GetUserBasedOnEmail(ctx context.Context, email string) (users []entity.User, err error) {
 	var user entity.User
 	rows, err := r.DBRead.QueryContext(ctx,
-		`SELECT id, "name", email, "role", is_active FROM auth."user" where email = $1`, email,
+		`SELECT id, "name", email, "role", is_active FROM "user" where email = $1`, email,
 	)
 	if err != nil {
 		return

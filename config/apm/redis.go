@@ -10,7 +10,7 @@ import (
 )
 
 // Redis is
-func (c *ConfigImpl) Redis(address, password string) *redis.Client {
+func (c *ConfigImpl) Redis(address, password string) redis.UniversalClient {
 	client := redis.NewClient(&redis.Options{
 		Addr:     address,
 		Password: password, // no password set

@@ -12,6 +12,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/widyan/go-codebase/model"
+	"go.elastic.co/apm/module/apmhttp"
 	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
@@ -27,6 +28,7 @@ type API_Interface interface {
 	CallAPI(ctx context.Context, url, method string, payload interface{}, header []model.Header) (body []byte, err error)
 	CallAPIFormData(ctx context.Context, url, method string, formData []model.FormData, headers []model.Header) (body []byte, err error)
 	SendToTelegram(url, method, tokenBOT, chatID, text string, IsContainArstik bool)
+	CallAPIAPM(ctx context.Context, url, method string, payload interface{}, header []model.Header) (body []byte, err error)
 }
 
 // CallAPI is
@@ -56,6 +58,39 @@ func (t *ToolsAPI) CallAPI(ctx context.Context, url, method string, payload inte
 	if err != nil {
 		// apm.CaptureError(ctx, err).Send()
 		// http.Error(w, "failed to query backend", 500)
+		return
+	}
+	defer res.Body.Close()
+	body, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Logger.Error(err.Error())
+		return
+	}
+
+	return
+}
+
+func (t *ToolsAPI) CallAPIAPM(ctx context.Context, url, method string, payload interface{}, header []model.Header) (body []byte, err error) {
+	// var res *http.Response
+	body, err = json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	var req *http.Request
+	req, err = http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(body))
+	if err != nil {
+		return
+	}
+
+	req.Header.Add("content-type", "application/json")
+	for _, e := range header {
+		req.Header.Add(e.Key, e.Value)
+	}
+
+	client := apmhttp.WrapClient(http.DefaultClient)
+	res, err := client.Do(req.WithContext(ctx))
+	if err != nil {
 		return
 	}
 	defer res.Body.Close()

@@ -15,7 +15,9 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	config "github.com/widyan/go-codebase/config/apm"
+	config "github.com/widyan/go-codebase/config"
+	configapm "github.com/widyan/go-codebase/config/apm"
+	configdatadog "github.com/widyan/go-codebase/config/datadog"
 	"github.com/widyan/go-codebase/helper"
 	"github.com/widyan/go-codebase/middleware"
 	"github.com/widyan/go-codebase/modules/domain"
@@ -31,6 +33,8 @@ import (
 	"go.elastic.co/apm/module/apmgin"
 	"go.elastic.co/apm/module/apmhttp"
 	"go.elastic.co/apm/transport"
+	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 func main() {
@@ -71,12 +75,6 @@ func main() {
 	vldt := validate.CreateValidator(validator)
 	// *************************************************************************************************
 
-	// ************************************ Config for implement DB ************************************
-	cfg := config.CreateConfigImplAPM(logger)
-	pq := cfg.Postgresql(os.Getenv("GORM_CONNECTION"), 20, 20)
-	pqdbAuth := cfg.Postgresql(os.Getenv("POSTGRES_AUTH_CONNECTION"), 20, 20)
-	// *************************************************************************************************
-
 	// ************************************ Implement Gin Gonic as Framework ***************************
 	routesGin := gin.New()
 	if os.Getenv("MODE") == "development" {
@@ -84,59 +82,61 @@ func main() {
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	routesGin.Use(apmgin.Middleware(routesGin))
 	// **************************************************************************************************
 
-	// ************************************ Setting APM ************************************
-	apm.DefaultTracer.Close()
-	tracer, err := apm.NewTracer("", "")
-	if err != nil {
-		logger.Panic(err)
+	var cfg config.Config
+	var httpHandler http.Handler
+	if os.Getenv("MONITORING_TOOLS") == "APM" {
+		cfg = configapm.CreateConfigImpl(logger)
+
+		// ************************************ Setting APM ************************************
+		routesGin.Use(apmgin.Middleware(routesGin))
+		apm.DefaultTracer.Close()
+		tracer, err := apm.NewTracer("", "")
+		if err != nil {
+			logger.Panic(err)
+		}
+
+		transport, err := transport.NewHTTPTransport()
+		if err != nil {
+			logger.Panic(err)
+		}
+
+		// transport.SetSecretToken(os.Getenv("ELASTIC_APM_SECRET_TOKEN"))
+		u, err := url.Parse(os.Getenv("ELASTIC_APM_SERVER_URL"))
+		if err != nil {
+			logger.Panic(err)
+		}
+
+		transport.SetServerURL(u)
+		tracer.Transport = transport
+		httpHandler = apmhttp.Wrap(routesGin, apmhttp.WithTracer(tracer))
+		// *****************************************************************************************
+	} else {
+		cfg = configdatadog.CreateConfigImpl(logger)
+
+		// ************************************ Setting DATADOG ************************************
+		tracer.Start()
+		defer tracer.Stop()
+
+		routesGin.Use(gintrace.Middleware("metanesia-payment"))
+		httpHandler = routesGin
+		// *****************************************************************************************
 	}
 
-	transport, err := transport.NewHTTPTransport()
-	if err != nil {
-		logger.Panic(err)
-	}
-
-	// transport.SetSecretToken(os.Getenv("ELASTIC_APM_SECRET_TOKEN"))
-	u, err := url.Parse(os.Getenv("ELASTIC_APM_SERVER_URL"))
-	if err != nil {
-		logger.Panic(err)
-	}
-
-	transport.SetServerURL(u)
-	tracer.Transport = transport
+	// ************************************ Config for implement DB ************************************
+	pq := cfg.Postgresql(os.Getenv("GORM_CONNECTION"), 20, 20)
+	pqdbAuth := cfg.Postgresql(os.Getenv("POSTGRES_AUTH_CONNECTION"), 20, 20)
+	// *************************************************************************************************
 
 	auth := middleware.Init(routesGin, logger, pqdbAuth, vldt, response)
 	domain.Init(routesGin, logger, vldt, pq, response, auth)
 	s := &http.Server{
 		Addr:         os.Getenv("PORT"),
-		Handler:      apmhttp.Wrap(routesGin, apmhttp.WithTracer(tracer)),
+		Handler:      httpHandler,
 		WriteTimeout: time.Second * 60,
 		ReadTimeout:  time.Second * 30,
 	}
-	// *****************************************************************************************
-
-	/*
-		// ************************************ Setting DATADOG ************************************
-
-		//import this librrary if you want setting datadog
-		//"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
-		//gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
-
-		tracer.Start()
-		defer tracer.Stop()
-
-		routesGin.Use(gintrace.Middleware("metanesia-payment"))
-		s := &http.Server{
-			Addr:         os.Getenv("PORT"),
-			Handler:      routesGin,
-			WriteTimeout: time.Second * 60,
-			ReadTimeout:  time.Second * 30,
-		}
-		// *****************************************************************************************
-	*/
 
 	go func() {
 		if err := s.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
