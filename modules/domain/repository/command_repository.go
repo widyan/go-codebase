@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/widyan/go-codebase/modules/domain/entity"
+	"github.com/widyan/go-codebase/modules/domain/interfaces"
 
 	"github.com/sirupsen/logrus"
 )
@@ -17,12 +18,12 @@ type Repository struct {
 	logger  *logrus.Logger
 }
 
-func CreateRepository(dbWrite, dbRead *sql.DB, logger *logrus.Logger) *Repository {
+func CreateRepository(dbWrite, dbRead *sql.DB, logger *logrus.Logger) interfaces.Repository_Interface {
 	return &Repository{dbWrite, dbRead, logger}
 }
 
 func (r *Repository) InsertUser(ctx context.Context, user entity.Users) (err error) {
-	query := "INSERT INTO sharing_session.users(id, fullname, no_hp, is_attend) values ($1, $2, $3, $4)"
+	query := "INSERT INTO users(id, fullname, no_hp, is_attend) values ($1, $2, $3, $4)"
 
 	_, err = r.DBWrite.ExecContext(ctx, query, user.ID, user.Fullname, user.NoHP, user.IsAttend)
 	if err != nil {
@@ -32,7 +33,7 @@ func (r *Repository) InsertUser(ctx context.Context, user entity.Users) (err err
 }
 
 func (r *Repository) UpdateUserByID(ctx context.Context, id int, fullname string) (err error) {
-	query := "UPDATE sharing_session.users SET fullname = $1 where id = $2"
+	query := "UPDATE users SET fullname = $1 where id = $2"
 	_, err = r.DBWrite.ExecContext(ctx, query, fullname, id)
 	if err != nil {
 		return

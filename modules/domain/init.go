@@ -25,5 +25,4 @@ func Init(routesGin *gin.Engine, logger *logrus.Logger, validator validate.Valid
 	hndler := CreateRoutes(routesGin, authUsecase)
 
 	routesGin = hndler.Routes()
-
 }

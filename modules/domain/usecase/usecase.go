@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+
 	"github.com/widyan/go-codebase/modules/domain/entity"
 	"github.com/widyan/go-codebase/modules/domain/interfaces"
 
@@ -13,7 +14,7 @@ type Usecase struct {
 	Logger     *logrus.Logger
 }
 
-func CreateUsecase(repo interfaces.Repository_Interface, logger *logrus.Logger) *Usecase {
+func CreateUsecase(repo interfaces.Repository_Interface, logger *logrus.Logger) interfaces.Usecase_Interface {
 	return &Usecase{
 		Repository: repo,
 		Logger:     logger,

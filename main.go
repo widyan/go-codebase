@@ -87,7 +87,6 @@ func main() {
 	var cfg config.Config
 	var httpHandler http.Handler
 	if os.Getenv("MONITORING_TOOLS") == "APM" {
-		logger.Info("MASUK SINI")
 		cfg = configapm.CreateConfigImpl(logger)
 
 		// ************************************ Setting APM ************************************

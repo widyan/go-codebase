@@ -28,7 +28,7 @@ func TimeStamapNow() time.Time {
 }
 
 func (r *Repository) AddUser(ctx context.Context, user entity.User) (err error) {
-	query := `INSERT INTO auth."user" (id, "name", email, "role", is_active, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7)`
+	query := `INSERT INTO "user" (id, "name", email, "role", is_active, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7)`
 	_, err = r.DBWrite.ExecContext(ctx, query, user.ID, user.Name, user.Email, user.Role, user.IsActive, TimeStamapNow(), TimeStamapNow())
 	return
 }

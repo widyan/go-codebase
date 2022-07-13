@@ -41,7 +41,7 @@ func (a *APIHandler) Login(c *gin.Context) {
 		return
 	}
 
-	responses, err := a.Usecase.CreateTokenServices(c, request)
+	responses, err := a.Usecase.CreateTokenServices(c.Request.Context(), request)
 	if err != nil {
 		a.Response.JsonWithCaptureError(c, err)
 		return
@@ -57,7 +57,7 @@ func (a *APIHandler) AddUser(c *gin.Context) {
 		return
 	}
 
-	err := a.Usecase.AddUser(c, request)
+	err := a.Usecase.AddUser(c.Request.Context(), request)
 	if err != nil {
 		a.Response.Json(c, http.StatusInternalServerError, nil, err.Error())
 		return
